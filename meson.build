@@ -1,7 +1,7 @@
 project('pdap', 'cpp',
   version : '0.1',
   default_options : ['warning_level=3',
-                     'cpp_std=c++14'])
+                     'cpp_std=c++20'])
 
 exe = executable('pdap', 'pdap.cpp',
   install : true)
