@@ -15,6 +15,7 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
             ("starty", po::value<int>()->required(), "The starting y location")
             ("goalx", po::value<int>()->required(), "The goal x location")
             ("goaly", po::value<int>()->required(), "The goal y location")
+            ("startt", po::value<double>()->default_value(0.0), "The starting time")
         ;
         po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help")){
