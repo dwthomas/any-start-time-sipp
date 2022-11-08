@@ -3,7 +3,12 @@ project('pdap', 'cpp',
   default_options : ['warning_level=3',
                      'cpp_std=c++20'])
 
-exe = executable('pdap', 'pdap.cpp',
-  install : true)
+subdir('src')
+
+boost_dep = dependency('boost', modules :['program_options',])
+
+exe = executable('pdap', sources,
+  install : true,
+  dependencies : boost_dep)
 
 test('basic', exe)
