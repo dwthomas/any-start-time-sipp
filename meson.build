@@ -5,10 +5,13 @@ project('pdap', 'cpp',
 
 subdir('src')
 
-boost_dep = dependency('boost', modules :['program_options',])
+boost_dep = dependency('boost', modules :['program_options','timer'])
+
+incdir = include_directories('include')
 
 exe = executable('pdap', sources,
   install : true,
-  dependencies : boost_dep)
+  dependencies : boost_dep,
+  include_directories : incdir)
 
 test('basic', exe)
