@@ -17,8 +17,9 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
             ("goalx", po::value<int>()->required(), "The goal x location")
             ("goaly", po::value<int>()->required(), "The goal y location")
             ("startt", po::value<double>()->default_value(0.0), "The starting time")
-            ("minwait", boost::program_options::value<float>()->default_value(0.0), "Minimum obstacle wait")
-            ("maxwait", boost::program_options::value<float>()->default_value(2.0), "Maximum obstacle wait")
+            ("minwait", boost::program_options::value<double>()->default_value(0.0), "Minimum obstacle wait")
+            ("maxwait", boost::program_options::value<double>()->default_value(2.0), "Maximum obstacle wait")
+            ("aspeed", boost::program_options::value<double>()->default_value(1.0))
         ;
         po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help")){
