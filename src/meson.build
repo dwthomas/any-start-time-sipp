@@ -1,1 +1,1 @@
-sources = files('main.cpp')
+sources = files('main.cpp', 'randomDynamicObstacle.cpp')

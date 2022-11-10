@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include "boost/program_options.hpp"
 #include "boost/timer/timer.hpp"
@@ -9,13 +10,15 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help", "produce help message")
-            ("obstacles", po::value<int>()->required(), "The number of moving obstacles to generate.")
+            ("obstacles", po::value<std::string>()->required(), "The file specifying obstacles to generate.")
             ("map", po::value<std::string>()->required(), "The filepath of the static map to use.")
             ("startx", po::value<int>()->required(), "The starting x location")
             ("starty", po::value<int>()->required(), "The starting y location")
             ("goalx", po::value<int>()->required(), "The goal x location")
             ("goaly", po::value<int>()->required(), "The goal y location")
             ("startt", po::value<double>()->default_value(0.0), "The starting time")
+            ("minwait", boost::program_options::value<float>()->default_value(0.0), "Minimum obstacle wait")
+            ("maxwait", boost::program_options::value<float>()->default_value(2.0), "Maximum obstacle wait")
         ;
         po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help")){
@@ -46,5 +49,9 @@ class Metadata{
 
         inline std::string mapfile(){
             return vm["map"].as<std::string>();
+        }
+
+        po::variables_map args(){
+            return vm;
         }
 };
