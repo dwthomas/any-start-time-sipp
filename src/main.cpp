@@ -1,12 +1,26 @@
 #include "metadata.hpp"
 #include "map.hpp"
 #include "dynamicObstacle.hpp"
+#include "node.hpp"
 #include "randomDynamicObstacle.hpp"
 #include "safeIntervals.hpp"
+#include "search.hpp"
+#include <vector>
+
+std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 
 int main(int argc, char *argv[]){
     Metadata metadata = Metadata(argc, argv);
     Map map = Map(metadata.mapfile());
-    std::vector<std::shared_ptr<DynamicObstacle>> obs = RandomDynamicObstacle::read_obstacles(metadata.args()["obs"].as<std::string>(), map, metadata.args()["minwait"].as<float>(), metadata.args()["maxwait"].as<float>());
+    std::vector<std::shared_ptr<DynamicObstacle>> obs = RandomDynamicObstacle::read_obstacles(metadata.args()["obstacles"].as<std::string>(), map, 
+                                                                                            metadata.args()["minwait"].as<double>(),
+                                                                                            metadata.args()["maxwait"].as<double>());
     SafeIntervals safe_intervals = SafeIntervals(obs, map);
+    State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), metadata.args()["startt"].as<double>());
+    State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
+    double agent_speed = metadata.args()["aspeed"].as<double>();
+
+    
+
+    aStar<sippNode>(start_state, goal, agent_speed,safe_intervals, map);
 }

@@ -2,19 +2,16 @@
 #include <cmath>
 #include <algorithm>
 #include "constants.hpp"
+#include "structs.hpp"
 
-template <typename NodeT, typename GoalT>
-constexpr double manhattanDistance(NodeT node, GoalT goal, double speed){
+inline double manhattanDistance(State node, State goal, double speed){
     return std::abs(goal.x - node.x) + std::abs(goal.y - node.y) / speed;
 }
-
-template <typename NodeT, typename GoalT>
-constexpr double euclideanDistance(NodeT node, GoalT goal, double speed){
+inline  double euclideanDistance(State node, State goal, double speed){
     return std::hypot(goal.x - node.x, goal.y - node.y) / speed;
 }
 
-template <typename NodeT, typename GoalT>
-constexpr double eightWayDistance(NodeT node, GoalT goal, double speed){
+inline double eightWayDistance(State node, State goal, double speed){
     int dx = std::abs(goal.x - node.x); 
     int dy = std::abs(goal.y - node.y);
     long diag = std::min(dx, dy);

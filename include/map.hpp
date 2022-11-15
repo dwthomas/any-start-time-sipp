@@ -100,19 +100,33 @@ struct Map{
         return !isBlocked(x, y);
     }
 
+    inline std::size_t get_safe_interval_ind(const State& s) const{
+        return 4*getIndex(s);
+    }
+
     inline std::vector<std::size_t> get_safe_interval_ind(const Action& action) const{
-            // return source, destination, edge indexes or source index
-            auto res = std::vector<std::size_t>();
-            const auto& source = action.source;
-            const auto& destination = action.destination;
-            res.reserve(3);
-            res.emplace_back(4*getIndex(source));
-            if (source == destination){
-                return res;
-            }
-            res.emplace_back(4*getIndex(destination));
-            int shift = (destination.x != source.x) | ((destination.y != source.y) << 1);
-            res.emplace_back(4*getIndex(std::min(destination.x, source.x), std::min(destination.y, source.y)) + shift);
+        // return source, destination, edge indexes or source index
+        auto res = std::vector<std::size_t>();
+        const auto& source = action.source;
+        const auto& destination = action.destination;
+        res.reserve(3);
+        res.emplace_back(4*getIndex(source));
+        if (source == destination){
             return res;
         }
+        res.emplace_back(4*getIndex(destination));
+        int shift = (destination.x != source.x) | ((destination.y != source.y) << 1);
+        res.emplace_back(4*getIndex(std::min(destination.x, source.x), std::min(destination.y, source.y)) + shift);
+        return res;
+    }
+
+    void debug()const{
+        
+        for (int j = 0; j < height; j++){
+            for (int i = 0; i < width; i++){
+                std::cout << isSafe(i, j);
+            }
+            std::cout << "\n";
+        }
+    }
 };
