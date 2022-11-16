@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cassert>
+#include <boost/assert.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -9,6 +9,8 @@
 #include <fstream>
 #include <vector>
 #include "structs.hpp"
+#include "constants.hpp"
+
 
 
 inline bool isOccupied(char c){
@@ -81,6 +83,9 @@ struct Map{
         assert (x >= 0 && (unsigned int)x < width);
         assert (y >= 0 && (unsigned int)y < height);
     }
+    constexpr bool inBounds(int x, int y) const{
+        return (x >= 0 && (unsigned int)x < width) && (y >= 0 && (unsigned int)y < height);
+    }
 
     inline std::size_t getIndex(int x, int y) const{
         checkBounds(x, y);
@@ -92,7 +97,6 @@ struct Map{
     }
 
     inline bool isBlocked(int x, int y) const{
-        checkBounds(x, y);
         return occupancy[getIndex(x, y)];
     }
 

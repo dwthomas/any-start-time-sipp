@@ -14,9 +14,7 @@ struct sippNode{
     std::size_t ind;
     std::size_t parent;
 
-    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),ind(_ind),parent(_parent){
-        std::cout << _t << " " << s.time << "\n";
-    };
+    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),ind(_ind),parent(_parent){};
 
     static std::vector<sippNode> nodes;
     
@@ -36,16 +34,11 @@ struct sippNode{
 
     static inline sippNode newNode(int x, int y, double intervalStart, double t, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-
-        std::cout << "nn sees: " << x << " " << y << " " << t << "\n";
         nodes.emplace_back(x, y, intervalStart, t, f, ind, parent);
-        std::cout << "nodes holds: ";
-        nodes.back().debug();
         return nodes.back();
     }
 
     static inline sippNode getNode(std::size_t ind){
-        std::cout << "get " << ind << "\n";
         assert(ind < nodes.size());
         return nodes[ind];
     }

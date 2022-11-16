@@ -298,10 +298,10 @@ class SafeIntervals{
                 return res;
             }
             if (action.source.x != action.destination.x && action.source.y != action.destination.y){
-                if (!map.isSafe(action.source.x, action.destination.y)){
+                if (map.inBounds(action.source.x, action.destination.y) &&!map.isSafe(action.source.x, action.destination.y)){
                     return res;
                 }
-                if (!map.isSafe(action.destination.x, action.source.y)){
+                if (map.inBounds(action.destination.x, action.source.y) && !map.isSafe(action.destination.x, action.source.y)){
                     return res;
                 }    
             }

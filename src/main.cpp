@@ -9,6 +9,7 @@
 
 std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 
+
 int main(int argc, char *argv[]){
     Metadata metadata = Metadata(argc, argv);
     Map map = Map(metadata.mapfile());
@@ -17,7 +18,9 @@ int main(int argc, char *argv[]){
                                                                                             metadata.args()["maxwait"].as<double>());
     SafeIntervals safe_intervals = SafeIntervals(obs, map);
     State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), metadata.args()["startt"].as<double>());
+    assert(map.isSafe(start_state.x, start_state.y));
     State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
+    assert(map.isSafe(goal.x, goal.y));
     double agent_speed = metadata.args()["aspeed"].as<double>();
 
     

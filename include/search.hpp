@@ -60,22 +60,22 @@ inline void generateSuccessors(const sippNode& current_node, const State& goal, 
                 dt = sqrt2()*agent_speed;
             }
             s.y = current_node.s.y + m_y;
+            if (!map.inBounds(s.x, s.y)){
+                continue;
+            }
             s.time = current_node.s.time + dt;
             auto interval_starts = safe_intervals.waits(map, Action(current_node.s, s));
             for (auto intervalStart: interval_starts){
                 s.time = std::max(s.time, intervalStart);
                 double f = s.time + eightWayDistance(current_node.s, goal, agent_speed);
-                s.debug();
                 auto n = sippNode::newNode(s.x, s.y, intervalStart, s.time, f, current_node.ind); 
                 if (safe_intervals.isSafe(Action(current_node.s, s), map)){
                     auto inClosed = closed.find(n);
                     if (inClosed != closed.end() && inClosed->s.time <= n.s.time){
                         continue;
                     }
-                    n.debug();
                     closed.emplace(n);
                     open.emplace(n);
-                    
                 }
             }
         }
@@ -94,8 +94,8 @@ inline void aStar(const State& start_state, const State& goal, double agent_spee
     while(!open.empty()){
         current_node = open.top();
         open.pop();
+        //current_node.debug();
         if (isGoal(current_node, goal)){
-            std::cout<< "goal found\n";
             backtrack_path(current_node);
             return;
         }
