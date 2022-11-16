@@ -44,7 +44,8 @@ class Metadata{
         po::variables_map vm;
         boost::timer::cpu_timer runtime;
     public:
-        Metadata(int argc, char *argv[]){
+        long expansions;
+        Metadata(int argc, char *argv[]):expansions(0){
             vm = parse_arguments(argc, argv);
         }
 

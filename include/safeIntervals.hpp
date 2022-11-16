@@ -197,7 +197,7 @@ class SafeIntervals{
 
         bool isSafe(const Action& action, const Map& map){
             safe_interval time = safe_interval();
-            if (map.isSafe(action.source.x, action.source.y) && map.isSafe(action.destination.x, action.destination.x)){
+            if (map.isSafe(action.source.x, action.source.y) && map.isSafe(action.destination.x, action.destination.y)){
                 if (action.source.x != action.destination.x && action.source.y != action.destination.y){
                     if (!map.isSafe(action.source.x, action.destination.y)){
                         return false;
@@ -288,17 +288,17 @@ class SafeIntervals{
                    destination.first <= time + dt && destination.second >= time + action_duration;
         }
 
-        inline std::vector<double> waits(const Map& map, const Action& action){
+        inline std::vector<std::pair<double, double>> waits(const Map& map, const Action& action){
             double t = action.source.time;
             double action_duration = action.destination.time - t;
-            auto res = std::vector<double>();
+            auto res = std::vector<std::pair<double, double>>();
             double wait = 0;
 
-            if (!map.isSafe(action.source.x, action.source.y) || !map.isSafe(action.destination.x, action.destination.x)){
+            if (!map.isSafe(action.source.x, action.source.y) || !map.isSafe(action.destination.x, action.destination.y)){
                 return res;
             }
             if (action.source.x != action.destination.x && action.source.y != action.destination.y){
-                if (map.inBounds(action.source.x, action.destination.y) &&!map.isSafe(action.source.x, action.destination.y)){
+                if (map.inBounds(action.source.x, action.destination.y) && !map.isSafe(action.source.x, action.destination.y)){
                     return res;
                 }
                 if (map.inBounds(action.destination.x, action.source.y) && !map.isSafe(action.destination.x, action.source.y)){
@@ -311,7 +311,7 @@ class SafeIntervals{
                 auto destination_interval = get_interval(t, inds[1]);
                 auto edge_interval = get_interval(t, inds[2]);
                 if(valid(t+wait, action_duration, *source_interval, *destination_interval, *edge_interval)){
-                    res.emplace_back(t+wait);
+                    res.emplace_back(t+wait, destination_interval->first);
                 }
                 destination_interval = std::next(destination_interval);
                 edge_interval = std::next(edge_interval);

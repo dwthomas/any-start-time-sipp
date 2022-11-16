@@ -25,5 +25,7 @@ int main(int argc, char *argv[]){
 
     
 
-    aStar<sippNode>(start_state, goal, agent_speed,safe_intervals, map);
+    aStar<sippNode>(start_state, goal, agent_speed,safe_intervals, map, metadata);
+
+    std::cout << "Expansions:" << metadata.expansions << "\n";
 }

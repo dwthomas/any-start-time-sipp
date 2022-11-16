@@ -45,7 +45,7 @@ struct sippNode{
     
     inline void debug() const{
         s.debug();
-        std::cout << "f: " << f << "\n";
+        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
     }
 
 };
@@ -77,7 +77,10 @@ struct NodeLess{
 template <typename NodeT>
 struct NodeGreater{
     inline bool operator()(const NodeT& lhs, const NodeT& rhs) const{
-        return !NodeLess<NodeT>()(lhs, rhs);
+        if (lhs.f == rhs.f) {
+            return lhs.s.time < rhs.s.time;
+        }
+        return lhs.f > rhs.f;
     }
 };
 
