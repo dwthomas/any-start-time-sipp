@@ -32,10 +32,10 @@ struct sippNode{
                intervalStart == rhs.intervalStart;
     }
 
-    static inline sippNode newNode(int x, int y, double intervalStart, double t, double f, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double f, std::size_t parent){
         std::size_t ind = nodes.size();
         nodes.emplace_back(x, y, intervalStart, t, f, ind, parent);
-        return nodes.back();
+        return ind;
     }
 
     static inline sippNode getNode(std::size_t ind){
@@ -52,21 +52,23 @@ struct sippNode{
 
 template <typename NodeT>
 struct NodeHash{
-    inline std::size_t operator()(const NodeT& node) const{
-        return node.hash();
+    inline std::size_t operator()(std::size_t ind) const{
+        return NodeT::nodes[ind].hash();
     }
 };
 
 template <typename NodeT>
 struct NodeEquals{
-    inline bool operator()(const NodeT& lhs, const NodeT& rhs) const{
-        return lhs.equals(rhs);
+    inline bool operator()(std::size_t lhs, std::size_t rhs) const{
+        return NodeT::nodes[lhs].equals(NodeT::nodes[rhs]);
     }
 };
 
 template <typename NodeT>
 struct NodeLess{
-    inline bool operator()(const NodeT& lhs, const NodeT& rhs) const{
+    inline bool operator()(std::size_t lhs_i, std::size_t rhs_i) const{
+        const NodeT& lhs = NodeT::nodes[lhs_i];
+        const NodeT& rhs = NodeT::nodes[rhs_i];
         if (lhs.f == rhs.f) {
             return lhs.s.time > rhs.s.time;
         }
@@ -76,7 +78,9 @@ struct NodeLess{
 
 template <typename NodeT>
 struct NodeGreater{
-    inline bool operator()(const NodeT& lhs, const NodeT& rhs) const{
+    inline bool operator()(std::size_t lhs_i, std::size_t rhs_i) const{
+        const NodeT& lhs = NodeT::nodes[lhs_i];
+        const NodeT& rhs = NodeT::nodes[rhs_i];
         if (lhs.f == rhs.f) {
             return lhs.s.time < rhs.s.time;
         }
@@ -85,4 +89,4 @@ struct NodeGreater{
 };
 
 template <typename NodeT>
-using NodeOpen = boost::heap::priority_queue<NodeT, boost::heap::compare<NodeGreater<NodeT>>>;
+using NodeOpen = boost::heap::priority_queue<std::size_t, boost::heap::compare<NodeGreater<NodeT>>>;

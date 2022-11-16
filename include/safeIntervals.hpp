@@ -1,6 +1,7 @@
 //put all safeinterval related stuff here
 #pragma once
 
+#include <memory>
 #define SOURCE 0
 #define DESTINATION 1
 #define EDGE 2
@@ -140,7 +141,7 @@ class SafeIntervals{
             unsafe_intervals.resize(4*size);
             _safe_intervals.resize(4*size);
             // need enough for all vertexes and neighboring edges.
-            generate(1.0);
+            generate(1000.0);
         }
 
         void debug(const Map& map) const{
@@ -288,21 +289,20 @@ class SafeIntervals{
                    destination.first <= time + dt && destination.second >= time + action_duration;
         }
 
-        inline std::vector<std::pair<double, double>> waits(const Map& map, const Action& action){
+        inline void waits(const Map& map, const Action& action, std::vector<std::pair<double, double>>& res){
             double t = action.source.time;
             double action_duration = action.destination.time - t;
-            auto res = std::vector<std::pair<double, double>>();
             double wait = 0;
 
             if (!map.isSafe(action.source.x, action.source.y) || !map.isSafe(action.destination.x, action.destination.y)){
-                return res;
+                return;
             }
             if (action.source.x != action.destination.x && action.source.y != action.destination.y){
                 if (map.inBounds(action.source.x, action.destination.y) && !map.isSafe(action.source.x, action.destination.y)){
-                    return res;
+                    return;
                 }
                 if (map.inBounds(action.destination.x, action.source.y) && !map.isSafe(action.destination.x, action.source.y)){
-                    return res;
+                    return;
                 }    
             }
             auto inds = map.get_safe_interval_ind(action);
@@ -327,7 +327,6 @@ class SafeIntervals{
                 wait = std::min(std::nextafter(destination_interval->first + 0.5 * action_duration - t, std::numeric_limits<double>::infinity()),
                         std::nextafter(edge_interval->first - t, std::numeric_limits<double>::infinity()));
             }
-            return res;
         }
 
         /*
