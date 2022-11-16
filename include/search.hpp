@@ -108,8 +108,66 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
     //std::cout << "\n";
 }
 
+inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map, std::unordered_set<std::size_t, NodeHash<pdapNode>, NodeEquals<pdapNode>>& closed, NodeOpen<pdapNode>& open){
+    double dt;
+    State s(0, 0, 0.0);
+    const pdapNode& current_node = pdapNode::getNode(cnode);
+    //current_node.debug();
+    //std::cout << "generates:\n";
+    auto interval_starts = std::vector<std::pair<double, safe_interval>>();
+    for (int m_x = -1; m_x <=1; m_x++){
+        s.x = current_node.s.x + m_x;
+        for (int m_y = -1; m_y <=1; m_y++){
+            if (m_x == 0 && m_y == 0){
+                continue;
+            }
+            else if (m_x == 0 || m_y == 0) {
+                dt = agent_speed;
+            }
+            else{
+                dt = sqrt2()*agent_speed;
+            }
+            s.y = current_node.s.y + m_y;
+            if (!map.inBounds(s.x, s.y)){
+                //std::cout << "out of bounds";
+                //s.debug();
+                continue;
+            }
+            s.time = current_node.s.time + dt;
+            //s.debug();
+            interval_starts.clear();
+            safe_intervals.waits(map, Action(current_node.s, s), interval_starts);
+            //std::cout << "waits: " << interval_starts.size() << "\n";
+            for (const auto& wait: interval_starts){
+                double intervalStart = wait.second.first;
+                double delta_prior = current_node.s.time - current_node.alpha;
+                double alpha = std::max(current_node.alpha, wait.second.first - delta_prior);
+                double beta = std::min(current_node.beta, wait.second.second - delta_prior);
+                s.time = alpha + delta_prior + dt;
+                double f = s.time + eightWayDistance(s, goal, agent_speed);
+                auto n = pdapNode::newNode(s.x, s.y, intervalStart, s.time, alpha, beta, f, cnode); 
+                //n.debug();
+                if (safe_intervals.isSafe(Action(current_node.s, s), map)){
+                    auto inClosed = closed.find(n);
+                    if (inClosed != closed.end() ){
+                        continue;
+                    }
+                    //n.debug();
+                    closed.emplace(n);
+                    open.emplace(n);
+                }
+                else{
+                    sippNode::remove(n);
+                }
+            }
+        }
+    }
+    //std::cout << "\n";
+}
+
 
 inline void sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+    metadata.runtime.start();
     std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>> closed;
     NodeOpen<sippNode> open;
     std::vector<State> path = {start_state};
@@ -128,9 +186,37 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
         //debug_open(open);
         //debug_closed(closed);
         if (isGoal(sippNode::getNode(current_node), goal)){
+            metadata.runtime.stop();
             backtrack_path<sippNode>(current_node);
             return;
         }
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);
+    }
+}
+
+inline void pdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+    metadata.runtime.start();
+    std::unordered_set<std::size_t, NodeHash<pdapNode>, NodeEquals<pdapNode>> closed;
+    NodeOpen<pdapNode> open;
+    std::vector<safe_interval> path = {*safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state))};
+    double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
+    auto current_node = pdapNode::newNode(start_state.x, start_state.y, path[0].first, 0.0, 0.0, path[0].second, f, std::numeric_limits<std::size_t>::max());
+    closed.emplace(current_node);
+    open.emplace(current_node);
+    while(!open.empty()){
+        current_node = open.top();
+        open.pop();
+        ++(metadata.expansions);
+        //current_node.debug();
+        //auto inClosed = closed.find(current_node);
+        //std::cout << (inClosed != closed.end()) << "\n";
+        //debug_open(open);
+        //debug_closed(closed);
+        if (isGoal(pdapNode::getNode(current_node), goal)){
+            metadata.runtime.stop();
+            backtrack_path<pdapNode>(current_node);
+            return;
+        }
+        pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);
     }
 }

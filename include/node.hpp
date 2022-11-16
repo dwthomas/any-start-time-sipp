@@ -54,6 +54,54 @@ struct sippNode{
     }
 };
 
+struct pdapNode{
+    State s; // s.time = Delta + alpha
+    double alpha;
+    double beta;
+    double intervalStart;
+    double f;
+    std::size_t ind;
+    std::size_t parent;
+
+    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),ind(_ind),parent(_parent){};
+
+    static std::vector<pdapNode> nodes;
+    
+    inline std::size_t hash() const{
+        std::size_t seed = 0;
+        boost::hash_combine(seed, s.x);
+        boost::hash_combine(seed, s.y);
+        boost::hash_combine(seed, intervalStart);
+        return seed;
+    }
+
+    inline bool equals(const pdapNode& rhs) const{
+        return s.x == rhs.s.x &&
+               s.y == rhs.s.y && 
+               intervalStart == rhs.intervalStart;
+    }
+
+    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t parent){
+        std::size_t ind = nodes.size();
+        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, ind, parent);
+        return ind;
+    }
+
+    static inline pdapNode getNode(std::size_t ind){
+        assert(ind < nodes.size());
+        return nodes[ind];
+    }
+    
+     static inline void remove(std::size_t ind){
+        assert(ind == (nodes.size()-1));
+        nodes.pop_back();
+    }
+
+    inline void debug() const{
+        s.debug();
+        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
+    }
+};
 
 template <typename NodeT>
 struct NodeHash{
