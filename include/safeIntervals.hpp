@@ -145,8 +145,8 @@ class SafeIntervals{
         }
 
         void debug(const Map& map) const{
-            for (int j = 0; j < map.height; j++){
-                for (int i = 0; i < map.width; i++){
+            for (uint j = 0; j < map.height; j++){
+                for (uint i = 0; i < map.width; i++){
                     std::cout << "<" <<_safe_intervals[4*map.getIndex(i, j)].begin()->first << "," << _safe_intervals[4*map.getIndex(i, j)].begin()->second << ">";
                 }
                 std::cout << "\n";

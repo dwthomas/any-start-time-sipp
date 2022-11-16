@@ -105,13 +105,13 @@ inline void generateSuccessors(std::size_t cnode, const State& goal, double agen
     //std::cout << "\n";
 }
 
-template<typename NodeT>
+
 inline void aStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>> closed;
-    NodeOpen<NodeT> open;
+    NodeOpen<sippNode> open;
     std::vector<State> path = {start_state};
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
-    auto current_node = NodeT::newNode(start_state.x,start_state.y, 0.0, start_state.time, f, std::numeric_limits<std::size_t>::max());
+    auto current_node = sippNode::newNode(start_state.x,start_state.y, 0.0, start_state.time, f, std::numeric_limits<std::size_t>::max());
     closed.emplace(current_node);
     open.emplace(current_node);
     while(!open.empty()){
@@ -124,8 +124,8 @@ inline void aStar(const State& start_state, const State& goal, double agent_spee
         //std::cout << (inClosed != closed.end()) << "\n";
         //debug_open(open);
         //debug_closed(closed);
-        if (isGoal(NodeT::getNode(current_node), goal)){
-            backtrack_path<NodeT>(current_node);
+        if (isGoal(sippNode::getNode(current_node), goal)){
+            backtrack_path<sippNode>(current_node);
             return;
         }
         generateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);

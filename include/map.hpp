@@ -125,9 +125,8 @@ struct Map{
     }
 
     void debug()const{
-        
-        for (int j = 0; j < height; j++){
-            for (int i = 0; i < width; i++){
+        for (uint j = 0; j < height; j++){
+            for (uint i = 0; i < width; i++){
                 std::cout << isSafe(i, j);
             }
             std::cout << "\n";
