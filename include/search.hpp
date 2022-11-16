@@ -54,7 +54,7 @@ inline void backtrack_path(std::size_t node){
     }
 }
 
-inline void generateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map, std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>>& closed, NodeOpen<sippNode>& open){
+inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map, std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>>& closed, NodeOpen<sippNode>& open){
     double dt;
     State s(0, 0, 0.0);
     const sippNode& current_node = sippNode::getNode(cnode);
@@ -99,6 +99,9 @@ inline void generateSuccessors(std::size_t cnode, const State& goal, double agen
                     closed.emplace(n);
                     open.emplace(n);
                 }
+                else{
+                    sippNode::remove(n);
+                }
             }
         }
     }
@@ -106,7 +109,7 @@ inline void generateSuccessors(std::size_t cnode, const State& goal, double agen
 }
 
 
-inline void aStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+inline void sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>> closed;
     NodeOpen<sippNode> open;
     std::vector<State> path = {start_state};
@@ -128,6 +131,6 @@ inline void aStar(const State& start_state, const State& goal, double agent_spee
             backtrack_path<sippNode>(current_node);
             return;
         }
-        generateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);
+        sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);
     }
 }

@@ -43,12 +43,17 @@ struct sippNode{
         return nodes[ind];
     }
     
+     static inline void remove(std::size_t ind){
+        assert(ind == (nodes.size()-1));
+        nodes.pop_back();
+    }
+
     inline void debug() const{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
     }
-
 };
+
 
 template <typename NodeT>
 struct NodeHash{

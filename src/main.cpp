@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
 
     
 
-    aStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+    sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
 
     std::cout << "Expansions:" << metadata.expansions << "\n";
 }
