@@ -11,10 +11,9 @@ struct sippNode{
     State s;
     double intervalStart;
     double f;
-    std::size_t ind;
     std::size_t parent;
 
-    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),ind(_ind),parent(_parent){};
+    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),parent(_parent){};
 
     static std::vector<sippNode> nodes;
     
@@ -60,10 +59,9 @@ struct pdapNode{
     double beta;
     double intervalStart;
     double f;
-    std::size_t ind;
     std::size_t parent;
 
-    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),ind(_ind),parent(_parent){};
+    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),parent(_parent){};
 
     static std::vector<pdapNode> nodes;
     

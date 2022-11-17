@@ -54,15 +54,14 @@ inline void backtrack_path(std::size_t node){
     }
 }
 
-inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map, std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>>& closed, NodeOpen<sippNode>& open){
+inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
+                                     std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>>& closed, NodeOpen<sippNode>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
     double dt;
-    State s(0, 0, 0.0);
     const sippNode& current_node = sippNode::getNode(cnode);
-    //current_node.debug();
-    //std::cout << "generates:\n";
-    auto interval_starts = std::vector<std::pair<double, double>>();
+    Action act(current_node.s, State(0, 0, 0));
+    //auto interval_starts = std::vector<std::pair<double, double>>();
     for (int m_x = -1; m_x <=1; m_x++){
-        s.x = current_node.s.x + m_x;
+        act.destination.x = current_node.s.x + m_x;
         for (int m_y = -1; m_y <=1; m_y++){
             if (m_x == 0 && m_y == 0){
                 continue;
@@ -73,50 +72,39 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
             else{
                 dt = sqrt2()*agent_speed;
             }
-            s.y = current_node.s.y + m_y;
-            if (!map.inBounds(s.x, s.y)){
-                //std::cout << "out of bounds";
-                //s.debug();
+            act.destination.y = current_node.s.y + m_y;
+            if (!map.inBounds(act.destination.x, act.destination.y)){
+
                 continue;
             }
-            s.time = current_node.s.time + dt;
-            //s.debug();
-            interval_starts.clear();
-            safe_intervals.waits(map, Action(current_node.s, s), interval_starts);
-            //std::cout << "waits: " << interval_starts.size() << "\n";
-            for (const auto& wait: interval_starts){
-                double intervalStart = wait.second;
-                s.time = std::max(s.time, wait.first);
-                double f = s.time + eightWayDistance(s, goal, agent_speed);
-                auto n = sippNode::newNode(s.x, s.y, intervalStart, s.time, f, cnode); 
-                //n.debug();
-                if (safe_intervals.isSafe(Action(current_node.s, s), map)){
+            act.destination.time = current_node.s.time + dt;
+            safe_intervals.waits(map, act, waits_res, waits_res_ind);
+            int wrs = waits_res.size();
+            for (int i = 0; i < wrs; i++){
+                double intervalStart = waits_res_ind[i];
+                act.destination.time = std::max(act.destination.time, waits_res[i]); 
+                if (safe_intervals.isSafe(act, map)){
+                    double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                    auto n = sippNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, f, cnode);
                     auto inClosed = closed.find(n);
                     if (inClosed != closed.end() ){
                         continue;
                     }
-                    //n.debug();
                     closed.emplace(n);
                     open.emplace(n);
-                }
-                else{
-                    sippNode::remove(n);
                 }
             }
         }
     }
-    //std::cout << "\n";
 }
 
 inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map, std::unordered_set<std::size_t, NodeHash<pdapNode>, NodeEquals<pdapNode>>& closed, NodeOpen<pdapNode>& open){
     double dt;
-    State s(0, 0, 0.0);
     const pdapNode& current_node = pdapNode::getNode(cnode);
-    //current_node.debug();
-    //std::cout << "generates:\n";
+    Action act(current_node.s, State(0, 0, 0));
     auto interval_starts = std::vector<std::pair<double, safe_interval>>();
     for (int m_x = -1; m_x <=1; m_x++){
-        s.x = current_node.s.x + m_x;
+        act.destination.x = current_node.s.x + m_x;
         for (int m_y = -1; m_y <=1; m_y++){
             if (m_x == 0 && m_y == 0){
                 continue;
@@ -127,27 +115,27 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
             else{
                 dt = sqrt2()*agent_speed;
             }
-            s.y = current_node.s.y + m_y;
-            if (!map.inBounds(s.x, s.y)){
+            act.destination.y = current_node.s.y + m_y;
+            if (!map.inBounds(act.destination.x, act.destination.y)){
                 //std::cout << "out of bounds";
                 //s.debug();
                 continue;
             }
-            s.time = current_node.s.time + dt;
+            act.destination.time = current_node.s.time + dt;
             //s.debug();
             interval_starts.clear();
-            safe_intervals.waits(map, Action(current_node.s, s), interval_starts);
+            safe_intervals.waits(map, act, interval_starts);
             //std::cout << "waits: " << interval_starts.size() << "\n";
             for (const auto& wait: interval_starts){
                 double intervalStart = wait.second.first;
                 double delta_prior = current_node.s.time - current_node.alpha;
                 double alpha = std::max(current_node.alpha, wait.second.first - delta_prior);
                 double beta = std::min(current_node.beta, wait.second.second - delta_prior);
-                s.time = alpha + delta_prior + dt;
-                double f = s.time + eightWayDistance(s, goal, agent_speed);
-                auto n = pdapNode::newNode(s.x, s.y, intervalStart, s.time, alpha, beta, f, cnode); 
+                act.destination.time = alpha + delta_prior + dt;
+                double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                auto n = pdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, cnode); 
                 //n.debug();
-                if (safe_intervals.isSafe(Action(current_node.s, s), map)){
+                if (safe_intervals.isSafe(act, map)){
                     auto inClosed = closed.find(n);
                     if (inClosed != closed.end() ){
                         continue;
@@ -170,6 +158,8 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
     metadata.runtime.start();
     std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>> closed;
     NodeOpen<sippNode> open;
+    std::vector<double> waits_res;
+    std::vector<std::size_t> waits_res_ind;
     std::vector<State> path = {start_state};
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = sippNode::newNode(start_state.x,start_state.y, 0.0, start_state.time, f, std::numeric_limits<std::size_t>::max());
@@ -178,7 +168,6 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
     while(!open.empty()){
         current_node = open.top();
         open.pop();
-
         ++(metadata.expansions);
         //current_node.debug();
         //auto inClosed = closed.find(current_node);
@@ -190,7 +179,7 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
             backtrack_path<sippNode>(current_node);
             return;
         }
-        sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open);
+        sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, closed, open, waits_res, waits_res_ind);
     }
 }
 
