@@ -38,7 +38,7 @@ class SafeIntervals{
         double valid_until;
         double forget_until;
         std::vector<boost::container::flat_set<safe_interval>> _safe_intervals;
-        std::vector<std::vector<char>> _visited;
+        std::vector<std::vector<bool>> _visited;
         std::vector<boost::container::flat_set<safe_interval>> unsafe_intervals;
         const std::vector<std::shared_ptr<DynamicObstacle>>& _obs;
         const Map& _map;
@@ -215,7 +215,7 @@ class SafeIntervals{
             std::cout << _safe_intervals[0].size() << "\n";
             _visited.reserve(_safe_intervals.size());
             for (int i = 0; i < _safe_intervals.size();i++){
-                _visited.emplace_back(std::vector<char>());
+                _visited.emplace_back(std::vector<bool>());
                 _visited[i].reserve(_safe_intervals[i].size());
                 for (int j = 0; j<_safe_intervals[i].size();j++ ){
                     _visited[i].push_back(false);
