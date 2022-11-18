@@ -205,6 +205,7 @@ class SafeIntervals{
         inline bool isSafe(const Action& action, const Map& map) const{
             safe_interval time = safe_interval();
             std::array<std::size_t, 3> ind;
+            ind.fill(std::numeric_limits<std::size_t>::max());
             if (map.isSafe(action.source.x, action.source.y) && map.isSafe(action.destination.x, action.destination.y)){
                 if (action.source.x != action.destination.x && action.source.y != action.destination.y){
                     if (!map.isSafe(action.source.x, action.destination.y)){
@@ -281,26 +282,27 @@ class SafeIntervals{
                    destination.first <= time + dt && destination.second >= time + action_duration;
         }
 
-        inline bool markvisited(std::size_t ind, std::size_t i){
-            bool retval = _visited[ind][i];
-            _visited[ind][i] = true;
+        inline bool markvisited(std::size_t loc_ind, std::size_t interval_i){
+            bool retval = _visited[loc_ind][interval_i];
+            _visited[loc_ind][interval_i] = true;
             return retval;
         }
 
-        inline void waits(const Map& map, const Action& action, std::vector<double>& res, std::vector<std::size_t>& res_ind) const{
+        inline std::size_t waits(const Map& map, const Action& action, std::vector<double>& res, std::vector<std::size_t>& res_ind) const{
             double t = action.source.time;
             double action_duration = action.destination.time - t;
             double wait = 0;
             std::array<std::size_t, 3> inds;
+            inds.fill(std::numeric_limits<std::size_t>::max());
             if (!map.isSafe(action.source.x, action.source.y) || !map.isSafe(action.destination.x, action.destination.y)){
-                return;
+                return inds[1];
             }
             if (action.source.x != action.destination.x && action.source.y != action.destination.y){
                 if (map.inBounds(action.source.x, action.destination.y) && !map.isSafe(action.source.x, action.destination.y)){
-                    return;
+                    return inds[1];
                 }
                 if (map.inBounds(action.destination.x, action.source.y) && !map.isSafe(action.destination.x, action.source.y)){
-                    return;
+                    return inds[1];
                 }    
             }
             map.get_safe_interval_ind(action, inds);
@@ -328,6 +330,7 @@ class SafeIntervals{
                 wait = std::min(std::nextafter(destination_interval->first + 0.5 * action_duration - t, std::numeric_limits<double>::infinity()),
                         std::nextafter(edge_interval->first - t, std::numeric_limits<double>::infinity()));
             }
+            return inds[1];
         }
         inline void waits(const Map& map, const Action& action, std::vector<std::pair<double, std::pair<double,double>>>& res) const{
             double t = action.source.time;
