@@ -27,6 +27,7 @@ int main(int argc, char *argv[]){
     sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
     std::cout << metadata.runtime.format() << "\n";
     std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n";
+    safe_intervals.zero_visits();
     metadata.expansions = 0;
     pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
     std::cout << metadata.runtime.format() << "\n";

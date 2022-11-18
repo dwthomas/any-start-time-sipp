@@ -38,7 +38,7 @@ class SafeIntervals{
         double valid_until;
         double forget_until;
         std::vector<boost::container::flat_set<safe_interval>> _safe_intervals;
-        std::vector<std::vector<bool>> _visited;
+        std::vector<std::vector<char>> _visited;
         std::vector<boost::container::flat_set<safe_interval>> unsafe_intervals;
         const std::vector<std::shared_ptr<DynamicObstacle>>& _obs;
         const Map& _map;
@@ -140,7 +140,7 @@ class SafeIntervals{
     public:
         SafeIntervals(const std::vector<std::shared_ptr<DynamicObstacle>>& obs, const Map& map):valid_until(0.0),forget_until(0.0),_obs(obs),_map(map){
             std::size_t size = map.size;
-            unsafe_intervals.resize(4*size);
+            //unsafe_intervals.resize(4*size);
             _safe_intervals.resize(4*size);
             // need enough for all vertexes and neighboring edges.
             generate(1000.0);
@@ -172,32 +172,54 @@ class SafeIntervals{
             }
         }
 
+        inline void zero_visits(){
+            for (int i = 0; i < _visited.size();i++){
+                for (int j = 0; j < _visited[i].size();i++){
+                    _visited[i][j] = false;
+                    }
+                }
+            }
+
+
         void generate(double until){
             if (valid_until >= until){
                 return;
             }
             std::array<std::size_t,3> ind;
+            std::vector<std::vector<safe_interval>> _unsafe_intervals;
+            _unsafe_intervals.reserve(_safe_intervals.size());
+            for (int i = 0; i<_safe_intervals.size();i++){
+                _unsafe_intervals.emplace_back(std::vector<safe_interval>());
+            }
             for (auto obstacle: _obs){
                 auto path = obstacle->path(valid_until, until);
                 for (std::size_t i = 1; i<path.size(); i++){
                     auto action = Action(path[i-1], path[i]);
                     _map.get_safe_interval_ind(action, ind);
                     if (ind[1] == std::numeric_limits<std::size_t>::max()){
-                        unsafe_intervals[ind[0]].emplace(action.source.time, action.destination.time);
+                        _unsafe_intervals[ind[0]].emplace_back(action.source.time, action.destination.time);
                     }
                     else{
                         double dt = 0.5*(action.destination.time - action.source.time);
-                        unsafe_intervals[ind[0]].emplace(action.source.time, action.source.time + dt);
-                        unsafe_intervals[ind[1]].emplace(action.destination.time - dt, action.destination.time);
-                        unsafe_intervals[ind[2]].emplace(action.source.time, action.destination.time);
+                        _unsafe_intervals[ind[0]].emplace_back(action.source.time, action.source.time + dt);
+                        _unsafe_intervals[ind[1]].emplace_back(action.destination.time - dt, action.destination.time);
+                        _unsafe_intervals[ind[2]].emplace_back(action.source.time, action.destination.time);
                     }
                 }
             }
+            for (int i = 0; i<_safe_intervals.size();i++){
+                unsafe_intervals.emplace_back(_unsafe_intervals[i].begin(), _unsafe_intervals[i].end());
+            }
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
+            std::cout << _safe_intervals[0].size() << "\n";
             _visited.reserve(_safe_intervals.size());
             for (int i = 0; i < _safe_intervals.size();i++){
-                _visited[i] = std::vector<bool>(_safe_intervals[i].size(),false);
+                _visited.emplace_back(std::vector<char>());
+                _visited[i].reserve(_safe_intervals[i].size());
+                for (int j = 0; j<_safe_intervals[i].size();j++ ){
+                    _visited[i].push_back(false);
+                }
             }
             valid_until = until;
         }
@@ -280,6 +302,10 @@ class SafeIntervals{
             return source.first <= time && source.second >= time + dt &&
                    edge.first <= time && edge.second >= time + action_duration &&
                    destination.first <= time + dt && destination.second >= time + action_duration;
+        }
+
+        inline auto get_intervals(std::size_t loc_ind, std::size_t interval_i) const{
+            return _safe_intervals[loc_ind].nth(interval_i);
         }
 
         inline bool markvisited(std::size_t loc_ind, std::size_t interval_i){
