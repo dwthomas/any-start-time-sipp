@@ -180,6 +180,11 @@ class SafeIntervals{
                 }
             }
 
+        void always_safe_until(const State& s, double until, const Map& map){
+            auto ind = map.get_safe_interval_ind(s);
+            _safe_intervals[ind] = boost::container::flat_set<safe_interval>();
+            _safe_intervals[ind].emplace(0.0, until);
+        }
 
         void generate(double until){
             if (valid_until >= until){
@@ -212,7 +217,7 @@ class SafeIntervals{
             }
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
-            std::cout << _safe_intervals[0].size() << "\n";
+            //std::cout << _safe_intervals[0].size() << "\n";
             _visited.reserve(_safe_intervals.size());
             for (int i = 0; i < _safe_intervals.size();i++){
                 _visited.emplace_back(std::vector<bool>());
@@ -335,7 +340,8 @@ class SafeIntervals{
             auto source_interval = get_interval(t, inds[0]);
             res.clear();
             res_ind.clear();
-            while(t + wait + 0.5*action_duration <= source_interval->second){
+            while((t + wait + 0.5*action_duration) <= source_interval->second){
+                double twait = wait;
                 auto destination_interval = get_interval(t, inds[1]);
                 auto edge_interval = get_interval(t, inds[2]);
                 if(valid(t+wait, action_duration, *source_interval, *destination_interval, *edge_interval)){
@@ -353,8 +359,14 @@ class SafeIntervals{
                 else if(edge_interval == _safe_intervals[inds[2]].end()){
                     wait = std::nextafter(destination_interval->first + 0.5 * action_duration - t, std::numeric_limits<double>::infinity());
                 }
-                wait = std::min(std::nextafter(destination_interval->first + 0.5 * action_duration - t, std::numeric_limits<double>::infinity()),
+                else{
+                    wait = std::min(std::nextafter(destination_interval->first + 0.5 * action_duration - t, std::numeric_limits<double>::infinity()),
                         std::nextafter(edge_interval->first - t, std::numeric_limits<double>::infinity()));
+                }
+                if (wait <= twait){
+                    break;
+                }
+               
             }
             return inds[1];
         }

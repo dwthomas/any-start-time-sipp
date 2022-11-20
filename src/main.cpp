@@ -12,7 +12,7 @@ std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 std::vector<pdapNode>  pdapNode::nodes = std::vector<pdapNode>();
 
 int main(int argc, char *argv[]){
-    std::cout << "state, sippnode, pdap: " << sizeof(State) << "," << sizeof(sippNode) << "," << sizeof(pdapNode) << "\n" << sizeof(short) << "\n";
+    //std::cout << "state, sippnode, pdap: " << sizeof(State) << "," << sizeof(sippNode) << "," << sizeof(pdapNode) << "\n" << sizeof(short) << "\n";
     Metadata metadata = Metadata(argc, argv);
     Map map = Map(metadata.mapfile());
     std::vector<std::shared_ptr<DynamicObstacle>> obs = RandomDynamicObstacle::read_obstacles(metadata.args()["obstacles"].as<std::string>(), map, 
@@ -21,6 +21,7 @@ int main(int argc, char *argv[]){
     SafeIntervals safe_intervals = SafeIntervals(obs, map);
     State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), metadata.args()["startt"].as<double>());
     assert(map.isSafe(start_state.x, start_state.y));
+    safe_intervals.always_safe_until(start_state, 5.0, map);
     State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
     assert(map.isSafe(goal.x, goal.y));
     double agent_speed = metadata.args()["aspeed"].as<double>();

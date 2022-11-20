@@ -155,6 +155,9 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
             backtrack_path<sippNode>(current_node);
             return;
         }
+        if (sippNode::getNode(current_node).s.time > 1000.0){
+            std::cout << "overtime \n";
+        }
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
 }

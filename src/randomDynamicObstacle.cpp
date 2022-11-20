@@ -43,7 +43,7 @@ RandomDynamicObstacle::RandomDynamicObstacle(int x, int y, const Map& _map, doub
 unsigned int RandomDynamicObstacle::get_max(int x, int y, int dx, int dy) const{
     assert(dx != 0 || dy != 0);
     int steps = 0;
-    while(map.isSafe(x + (steps + 1)*dx, y + (steps + 1)*dy)){
+    while(map.inBounds(x + (steps + 1)*dx, y + (steps + 1)*dy) &&  map.isSafe(x + (steps + 1)*dx, y + (steps + 1)*dy)){
         ++steps;
     }
     return steps;
