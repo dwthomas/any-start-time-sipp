@@ -18,7 +18,8 @@ int main(int argc, char *argv[]){
     std::vector<std::shared_ptr<DynamicObstacle>> obs = RandomDynamicObstacle::read_obstacles(metadata.args()["obstacles"].as<std::string>(), map, 
                                                                                             metadata.args()["minwait"].as<double>(),
                                                                                             metadata.args()["maxwait"].as<double>());
-    SafeIntervals safe_intervals = SafeIntervals(obs, map);
+    double unsafe_time = metadata.args()["allendt"].as<double>();
+    SafeIntervals safe_intervals = SafeIntervals(obs, map, unsafe_time);
     State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), metadata.args()["startt"].as<double>());
     assert(map.isSafe(start_state.x, start_state.y));
     safe_intervals.always_safe_until(start_state, metadata.args()["startendt"].as<double>(), map);

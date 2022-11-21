@@ -138,12 +138,12 @@ class SafeIntervals{
             }
         }
     public:
-        SafeIntervals(const std::vector<std::shared_ptr<DynamicObstacle>>& obs, const Map& map):valid_until(0.0),forget_until(0.0),_obs(obs),_map(map){
+        SafeIntervals(const std::vector<std::shared_ptr<DynamicObstacle>>& obs, const Map& map, double unsafe_time):valid_until(0.0),forget_until(0.0),_obs(obs),_map(map){
             std::size_t size = map.size;
             //unsafe_intervals.resize(4*size);
             _safe_intervals.resize(4*size);
             // need enough for all vertexes and neighboring edges.
-            generate(1000.0);
+            generate(unsafe_time);
         }
 
         void debug(const Map& map) const{
@@ -214,6 +214,7 @@ class SafeIntervals{
             }
             for (int i = 0; i<_safe_intervals.size();i++){
                 unsafe_intervals.emplace_back(_unsafe_intervals[i].begin(), _unsafe_intervals[i].end());
+                unsafe_intervals.back().emplace(safe_interval(until, std::numeric_limits<double>::infinity()));
             }
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
