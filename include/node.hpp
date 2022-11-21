@@ -101,6 +101,14 @@ struct pdapNode{
         nodes.pop_back();
     }
 
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, std::size_t cnode){
+        nodes[node_ind].f = nodes[node_ind].f - nodes[node_ind].s.time + time;
+        nodes[node_ind].s.time = time;
+        nodes[node_ind].parent = cnode;
+        nodes[node_ind].alpha = alpha;
+        nodes[node_ind].beta = beta;
+    }
+
     inline void debug() const{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";

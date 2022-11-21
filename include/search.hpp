@@ -84,6 +84,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 if (safe_intervals.isSafe(act, map)){
                     double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                     std::size_t node_ind = safe_intervals.visited(loc_ind, i);
+                    double intervalStart = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->first;
                     if (node_ind != std::numeric_limits<std::size_t>::max()){
                         if (sippNode::getNode(node_ind).s.time > act.destination.time){
                             sippNode::set_arrival(node_ind, act.destination.time, cnode);
@@ -91,7 +92,6 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                         }
                         continue;
                     }
-                    double intervalStart = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->first;
                     auto j = sippNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, f, cnode);
                     open.emplace(j);
                     safe_intervals.markvisited(loc_ind, i, j);
@@ -135,7 +135,17 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     double alpha = std::max(current_node.alpha, intervalStart - delta_prior);
                     double beta = std::min(current_node.beta, intervalEnd - delta_prior);
                     double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
-                    open.emplace(pdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, cnode)); 
+                    std::size_t node_ind = safe_intervals.visited(loc_ind, i);
+                    if (node_ind != std::numeric_limits<std::size_t>::max()){
+                        if (pdapNode::getNode(node_ind).s.time > act.destination.time){
+                            pdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, cnode);
+                            open.emplace(node_ind);
+                        }
+                        continue;
+                    }
+                    auto j = pdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, cnode);
+                    open.emplace(j);
+                    safe_intervals.markvisited(loc_ind, i, j);
                 }
             }
         }
