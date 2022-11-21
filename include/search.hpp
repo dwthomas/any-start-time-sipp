@@ -38,7 +38,7 @@ inline bool isGoal(const NodeT& node, const State& goal ){
 }
 
 template <typename NodeT>
-inline void backtrack_path(std::size_t node){
+inline std::vector<State> backtrack_path(std::size_t node){
     const NodeT& n = NodeT::getNode(node);
     std::vector<State> path = {n.s};
     if (n.parent != std::numeric_limits<std::size_t>::max()){
@@ -52,6 +52,7 @@ inline void backtrack_path(std::size_t node){
     for (auto it = path.rbegin(); it != path.rend(); it++){
         it->debug();
     }
+    return std::vector<State>(path.rbegin(), path.rend());
 }
 
 inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
@@ -154,12 +155,11 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 }
 
 
-inline void sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
     NodeOpen<sippNode> open;
-    std::vector<State> path = {start_state};
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = sippNode::newNode(start_state.x,start_state.y, 0.0, start_state.time, f, std::numeric_limits<std::size_t>::max());
     safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
@@ -170,8 +170,7 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
         ++(metadata.expansions);
         if (isGoal(sippNode::getNode(current_node), goal)){
             metadata.runtime.stop();
-            backtrack_path<sippNode>(current_node);
-            return;
+            return backtrack_path<sippNode>(current_node);
         }
         if (sippNode::getNode(current_node).s.time > 1000.0){
             std::cout << "overtime \n";
@@ -179,6 +178,7 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
     std::cout << "No path found\n";
+    return {};
 }
 
 inline void pdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
@@ -186,9 +186,9 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
     NodeOpen<pdapNode> open;
-    std::vector<safe_interval> path = {*safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state))};
+    auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
-    auto current_node = pdapNode::newNode(start_state.x, start_state.y, path[0].first, 0.0, 0.0, path[0].second, f, std::numeric_limits<std::size_t>::max());
+    auto current_node = pdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0.0, start_interval->second, f, std::numeric_limits<std::size_t>::max());
     safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
     open.emplace(current_node);
     while(!open.empty()){
