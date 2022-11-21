@@ -178,6 +178,7 @@ inline void sippAStar(const State& start_state, const State& goal, double agent_
         }
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
+    std::cout << "No path found\n";
 }
 
 inline void pdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
@@ -201,4 +202,5 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
         }
         pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
+    std::cout << "No path found\n";
 }
