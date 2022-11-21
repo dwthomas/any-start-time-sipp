@@ -87,7 +87,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     double intervalStart = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->first;
                     if (node_ind != std::numeric_limits<std::size_t>::max()){
                         if (sippNode::getNode(node_ind).s.time > act.destination.time){
-                            sippNode::set_arrival(node_ind, act.destination.time, cnode);
+                            sippNode::set_arrival(node_ind, act.destination.time, f, cnode);
                             open.emplace(node_ind);
                         }
                         continue;
@@ -128,7 +128,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
             int wrs = waits_res.size();
             for (int i = 0; i < wrs; i++){
                 double delta_prior = current_node.s.time - current_node.alpha;
-                act.destination.time = waits_res[i] + dt;
+                act.destination.time = std::max(act.destination.time, waits_res[i]);
                 if (safe_intervals.isSafe(act, map)){ //&& !safe_intervals.markvisited(loc_ind, i)){
                     double intervalStart = safe_intervals.get_intervals(loc_ind,waits_res_ind[i])->first;
                     double intervalEnd = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->second;
@@ -138,7 +138,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     std::size_t node_ind = safe_intervals.visited(loc_ind, i);
                     if (node_ind != std::numeric_limits<std::size_t>::max()){
                         if (pdapNode::getNode(node_ind).s.time > act.destination.time){
-                            pdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, cnode);
+                            pdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, f, cnode);
                             open.emplace(node_ind);
                         }
                         continue;
@@ -156,15 +156,13 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 
 inline void sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
-    //std::unordered_set<std::size_t, NodeHash<sippNode>, NodeEquals<sippNode>> closed;
-    NodeOpen<sippNode> open;
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
+    NodeOpen<sippNode> open;
     std::vector<State> path = {start_state};
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = sippNode::newNode(start_state.x,start_state.y, 0.0, start_state.time, f, std::numeric_limits<std::size_t>::max());
     safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
-    //closed.emplace(current_node);
     open.emplace(current_node);
     while(!open.empty()){
         current_node = open.top();
@@ -190,8 +188,8 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     std::vector<safe_interval> path = {*safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state))};
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = pdapNode::newNode(start_state.x, start_state.y, path[0].first, 0.0, 0.0, path[0].second, f, std::numeric_limits<std::size_t>::max());
+    safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
     open.emplace(current_node);
-    //safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0);
     while(!open.empty()){
         current_node = open.top();
         open.pop();

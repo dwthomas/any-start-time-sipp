@@ -47,8 +47,8 @@ struct sippNode{
         nodes.pop_back();
     }
 
-    static inline void set_arrival(std::size_t node_ind, double time, std::size_t cnode){
-        nodes[node_ind].f = nodes[node_ind].f - nodes[node_ind].s.time + time;
+    static inline void set_arrival(std::size_t node_ind, double time, double f,std::size_t cnode){
+        nodes[node_ind].f = f;
         nodes[node_ind].s.time = time;
         nodes[node_ind].parent = cnode;
     }
@@ -101,8 +101,8 @@ struct pdapNode{
         nodes.pop_back();
     }
 
-    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, std::size_t cnode){
-        nodes[node_ind].f = nodes[node_ind].f - nodes[node_ind].s.time + time;
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f,std::size_t cnode){
+        nodes[node_ind].f = f;
         nodes[node_ind].s.time = time;
         nodes[node_ind].parent = cnode;
         nodes[node_ind].alpha = alpha;
