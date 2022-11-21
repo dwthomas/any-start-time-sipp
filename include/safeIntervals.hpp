@@ -173,11 +173,15 @@ class SafeIntervals{
         }
 
         inline void zero_visits(){
-            for (std::size_t i = 0; i < _visited.size();i++){
-                for (std::size_t j = 0; j < _visited[i].size();i++){
-                    _visited[i][j] =  std::numeric_limits<std::size_t>::max();
-                    }
+            _visited.clear();
+            _visited.reserve(_safe_intervals.size());
+            for (std::size_t i = 0; i < _safe_intervals.size();i++){
+                _visited.emplace_back(std::vector<std::size_t>());
+                _visited[i].reserve(_safe_intervals[i].size());
+                for (std::size_t j = 0; j<_safe_intervals[i].size();j++ ){
+                    _visited[i].push_back( std::numeric_limits<std::size_t>::max());
                 }
+            }
             }
 
         void always_safe_until(const State& s, double until, const Map& map){
@@ -219,14 +223,7 @@ class SafeIntervals{
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
             //std::cout << _safe_intervals[0].size() << "\n";
-            _visited.reserve(_safe_intervals.size());
-            for (std::size_t i = 0; i < _safe_intervals.size();i++){
-                _visited.emplace_back(std::vector<std::size_t>());
-                _visited[i].reserve(_safe_intervals[i].size());
-                for (std::size_t j = 0; j<_safe_intervals[i].size();j++ ){
-                    _visited[i].push_back( std::numeric_limits<std::size_t>::max());
-                }
-            }
+            zero_visits();
             valid_until = until;
         }
 

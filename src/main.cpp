@@ -12,6 +12,9 @@ std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 std::vector<pdapNode>  pdapNode::nodes = std::vector<pdapNode>();
 
 inline bool check_path(const std::vector<State>& path, double start_time, const Map& map, const SafeIntervals& safe_intervals){
+    if (path.size() == 0){
+        return false;
+    }
     State original(path[0].x, path[0].y, 0.0);
     Action act(original, path[0]);
     act.destination.time += start_time;
@@ -47,6 +50,21 @@ int main(int argc, char *argv[]){
     double agent_speed = metadata.args()["aspeed"].as<double>();
     if(metadata.args()["search"].as<std::string>() == "sipp"){
         auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        double rts = 0.0;
+        while(!check_path(path, start_time+rts, map, safe_intervals) &&
+                         start_time + rts <= metadata.args()["startendt"].as<double>()){
+            if (path.size() == 0){
+                break;
+            }
+            std::cout << "path failed trying start: ";
+            std::cout << "rts: " << rts << " " << path.size() <<"\n";
+            start_state.time = start_time + rts;
+            start_state.debug();
+            sippNode::nodes = std::vector<sippNode>();
+            safe_intervals.zero_visits();
+            path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata, true);
+            rts = metadata.runtime.elapsed().user*0.000000001;// conver to second from nanosecond
+        }
         std::cout << "path_check: " <<  check_path(path, start_time, map, safe_intervals) << "\n";
         std::cout << metadata.runtime.format() << "\n";
         std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n"; 

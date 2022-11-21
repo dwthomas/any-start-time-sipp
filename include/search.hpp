@@ -155,8 +155,14 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 }
 
 
-inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
-    metadata.runtime.start();
+inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata, bool resume = false){
+    ++(metadata.plan_attempts);
+    if (!resume){
+        metadata.runtime.start();
+    }
+    else{
+        metadata.runtime.resume();
+    }
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
     NodeOpen<sippNode> open;
@@ -177,7 +183,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
         }
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
-    std::cout << "No path found\n";
+    metadata.runtime.stop();
     return {};
 }
 
