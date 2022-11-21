@@ -173,8 +173,8 @@ class SafeIntervals{
         }
 
         inline void zero_visits(){
-            for (int i = 0; i < _visited.size();i++){
-                for (int j = 0; j < _visited[i].size();i++){
+            for (std::size_t i = 0; i < _visited.size();i++){
+                for (std::size_t j = 0; j < _visited[i].size();i++){
                     _visited[i][j] =  std::numeric_limits<std::size_t>::max();
                     }
                 }
@@ -193,7 +193,7 @@ class SafeIntervals{
             std::array<std::size_t,3> ind;
             std::vector<std::vector<safe_interval>> _unsafe_intervals;
             _unsafe_intervals.reserve(_safe_intervals.size());
-            for (int i = 0; i<_safe_intervals.size();i++){
+            for (std::size_t i = 0; i<_safe_intervals.size();i++){
                 _unsafe_intervals.emplace_back(std::vector<safe_interval>());
             }
             for (auto obstacle: _obs){
@@ -212,7 +212,7 @@ class SafeIntervals{
                     }
                 }
             }
-            for (int i = 0; i<_safe_intervals.size();i++){
+            for (std::size_t i = 0; i<_safe_intervals.size();i++){
                 unsafe_intervals.emplace_back(_unsafe_intervals[i].begin(), _unsafe_intervals[i].end());
                 unsafe_intervals.back().emplace(safe_interval(until, std::numeric_limits<double>::infinity()));
             }
@@ -220,10 +220,10 @@ class SafeIntervals{
             generate_from_unsafe(unsafe_intervals);
             //std::cout << _safe_intervals[0].size() << "\n";
             _visited.reserve(_safe_intervals.size());
-            for (int i = 0; i < _safe_intervals.size();i++){
+            for (std::size_t i = 0; i < _safe_intervals.size();i++){
                 _visited.emplace_back(std::vector<std::size_t>());
                 _visited[i].reserve(_safe_intervals[i].size());
-                for (int j = 0; j<_safe_intervals[i].size();j++ ){
+                for (std::size_t j = 0; j<_safe_intervals[i].size();j++ ){
                     _visited[i].push_back( std::numeric_limits<std::size_t>::max());
                 }
             }

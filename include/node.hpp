@@ -13,7 +13,7 @@ struct sippNode{
     double f;
     std::size_t parent;
 
-    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),parent(_parent){};
+    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),parent(_parent){};
 
     static std::vector<sippNode> nodes;
     
@@ -33,7 +33,7 @@ struct sippNode{
 
     static inline std::size_t newNode(int x, int y, double intervalStart, double t, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalStart, t, f, ind, parent);
+        nodes.emplace_back(x, y, intervalStart, t, f, parent);
         return ind;
     }
 
@@ -67,7 +67,7 @@ struct pdapNode{
     double f;
     std::size_t parent;
 
-    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _ind, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),parent(_parent){};
+    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),parent(_parent){};
 
     static std::vector<pdapNode> nodes;
     
@@ -87,7 +87,7 @@ struct pdapNode{
 
     static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, ind, parent);
+        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, parent);
         return ind;
     }
 
