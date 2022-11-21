@@ -47,6 +47,12 @@ struct sippNode{
         nodes.pop_back();
     }
 
+    static inline void set_arrival(std::size_t node_ind, double time, std::size_t cnode){
+        nodes[node_ind].f = nodes[node_ind].f - nodes[node_ind].s.time + time;
+        nodes[node_ind].s.time = time;
+        nodes[node_ind].parent = cnode;
+    }
+
     inline void debug() const{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";

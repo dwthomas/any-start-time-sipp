@@ -38,7 +38,7 @@ class SafeIntervals{
         double valid_until;
         double forget_until;
         std::vector<boost::container::flat_set<safe_interval>> _safe_intervals;
-        std::vector<std::vector<bool>> _visited;
+        std::vector<std::vector<std::size_t>> _visited;
         std::vector<boost::container::flat_set<safe_interval>> unsafe_intervals;
         const std::vector<std::shared_ptr<DynamicObstacle>>& _obs;
         const Map& _map;
@@ -175,7 +175,7 @@ class SafeIntervals{
         inline void zero_visits(){
             for (int i = 0; i < _visited.size();i++){
                 for (int j = 0; j < _visited[i].size();i++){
-                    _visited[i][j] = false;
+                    _visited[i][j] =  std::numeric_limits<std::size_t>::max();
                     }
                 }
             }
@@ -220,10 +220,10 @@ class SafeIntervals{
             //std::cout << _safe_intervals[0].size() << "\n";
             _visited.reserve(_safe_intervals.size());
             for (int i = 0; i < _safe_intervals.size();i++){
-                _visited.emplace_back(std::vector<bool>());
+                _visited.emplace_back(std::vector<std::size_t>());
                 _visited[i].reserve(_safe_intervals[i].size());
                 for (int j = 0; j<_safe_intervals[i].size();j++ ){
-                    _visited[i].push_back(false);
+                    _visited[i].push_back( std::numeric_limits<std::size_t>::max());
                 }
             }
             valid_until = until;
@@ -298,7 +298,7 @@ class SafeIntervals{
         inline auto get_interval(double time, std::size_t index)const{
             auto interval = _safe_intervals[index].upper_bound(safe_interval(time, std::numeric_limits<double>::infinity()));
             interval = std::prev(interval);
-            assert(interval->first <= time && time <= interval->second);
+            //assert(interval->first <= time && time <= interval->second);
             return interval;
         }
 
@@ -313,10 +313,12 @@ class SafeIntervals{
             return _safe_intervals[loc_ind].nth(interval_i);
         }
 
-        inline bool markvisited(std::size_t loc_ind, std::size_t interval_i){
-            bool retval = _visited[loc_ind][interval_i];
-            _visited[loc_ind][interval_i] = true;
-            return retval;
+        inline std::size_t visited(std::size_t loc_ind, std::size_t interval_i){
+            return _visited[loc_ind][interval_i];
+        }
+
+        inline void markvisited(std::size_t loc_ind, std::size_t interval_i, std::size_t node_ind){
+            _visited[loc_ind][interval_i] = node_ind;
         }
 
         inline std::size_t waits(const Map& map, const Action& action, std::vector<double>& res, std::vector<std::size_t>& res_ind) const{
@@ -370,6 +372,7 @@ class SafeIntervals{
             }
             return inds[1];
         }
+        /*
         inline void waits(const Map& map, const Action& action, std::vector<std::pair<double, std::pair<double,double>>>& res) const{
             double t = action.source.time;
             double action_duration = action.destination.time - t;
@@ -409,7 +412,7 @@ class SafeIntervals{
                         std::nextafter(edge_interval->first - t, std::numeric_limits<double>::infinity()));
             }
         }
-        /*
+        
         static void debug(const Map& map, const std::vector<boost::container::flat_set<safe_interval>>& intervals){
             for (int i=0; i < intervals.size(); i++){
                 map.ind2loc(i).debug();
