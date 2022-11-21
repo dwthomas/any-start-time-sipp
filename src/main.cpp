@@ -25,12 +25,17 @@ int main(int argc, char *argv[]){
     State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
     assert(map.isSafe(goal.x, goal.y));
     double agent_speed = metadata.args()["aspeed"].as<double>();
-    sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
-    std::cout << metadata.runtime.format() << "\n";
-    std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n";
-    safe_intervals.zero_visits();
-    metadata.expansions = 0;
-    pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
-    std::cout << metadata.runtime.format() << "\n";
-    std::cout << "PDAP\nExpansions:" << metadata.expansions << "\n";
+    if(metadata.args()["search"].as<std::string>() == "sipp"){
+        sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        std::cout << metadata.runtime.format() << "\n";
+        std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n"; 
+    }
+    else if (metadata.args()["search"].as<std::string>() == "pdap"){
+        pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        std::cout << metadata.runtime.format() << "\n";
+        std::cout << "PDAP\nExpansions:" << metadata.expansions << "\n";
+    }
+    else{
+        std::cout << "Incorrect search algorithm specified: " << metadata.args()["search"].as<std::string>() << "\n";
+    }
 }

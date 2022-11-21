@@ -12,6 +12,7 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
             ("help", "produce help message")
             ("obstacles", po::value<std::string>()->required(), "The file specifying obstacles to generate.")
             ("map", po::value<std::string>()->required(), "The filepath of the static map to use.")
+            ("search", po::value<std::string>()->required(), "The search to run, sipp, pdap...")
             ("startx", po::value<int>()->required(), "The starting x location")
             ("starty", po::value<int>()->required(), "The starting y location")
             ("goalx", po::value<int>()->required(), "The goal x location")
