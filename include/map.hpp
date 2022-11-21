@@ -1,10 +1,12 @@
 #pragma once
 
+#include <array>
 #include <boost/assert.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <string>
 #include <fstream>
 #include <vector>
@@ -108,26 +110,25 @@ struct Map{
         return 4*getIndex(s);
     }
 
-    inline std::vector<std::size_t> get_safe_interval_ind(const Action& action) const{
+    inline void get_safe_interval_ind(const Action& action, std::array<std::size_t,3>& res) const{
         // return source, destination, edge indexes or source index
-        auto res = std::vector<std::size_t>();
         const auto& source = action.source;
         const auto& destination = action.destination;
-        res.reserve(3);
-        res.emplace_back(4*getIndex(source));
+        res[0] = 4*getIndex(source);
         if (source == destination){
-            return res;
+            res[1] = std::numeric_limits<std::size_t>::max();
+            res[2] = std::numeric_limits<std::size_t>::max();
+            return;
         }
-        res.emplace_back(4*getIndex(destination));
+        res[1] = 4*getIndex(destination);
         int shift = (destination.x != source.x) | ((destination.y != source.y) << 1);
-        res.emplace_back(4*getIndex(std::min(destination.x, source.x), std::min(destination.y, source.y)) + shift);
-        return res;
+        res[2] = 4*getIndex(std::min(destination.x, source.x), std::min(destination.y, source.y)) + shift;
+        return;
     }
 
     void debug()const{
-        
-        for (int j = 0; j < height; j++){
-            for (int i = 0; i < width; i++){
+        for (uint j = 0; j < height; j++){
+            for (uint i = 0; i < width; i++){
                 std::cout << isSafe(i, j);
             }
             std::cout << "\n";

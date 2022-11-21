@@ -12,11 +12,14 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
             ("help", "produce help message")
             ("obstacles", po::value<std::string>()->required(), "The file specifying obstacles to generate.")
             ("map", po::value<std::string>()->required(), "The filepath of the static map to use.")
+            ("search", po::value<std::string>()->required(), "The search to run, sipp, pdap...")
             ("startx", po::value<int>()->required(), "The starting x location")
             ("starty", po::value<int>()->required(), "The starting y location")
             ("goalx", po::value<int>()->required(), "The goal x location")
             ("goaly", po::value<int>()->required(), "The goal y location")
             ("startt", po::value<double>()->default_value(0.0), "The starting time")
+            ("startendt", po::value<double>()->default_value(10.0), "The end of the safe interval at start")
+            ("allendt", po::value<double>()->default_value(1000.0), "The end of the safe interval everywhere")
             ("minwait", boost::program_options::value<double>()->default_value(0.0), "Minimum obstacle wait")
             ("maxwait", boost::program_options::value<double>()->default_value(2.0), "Maximum obstacle wait")
             ("aspeed", boost::program_options::value<double>()->default_value(1.0))
@@ -42,10 +45,11 @@ inline po::variables_map parse_arguments(int argc, char *argv[]){
 class Metadata{
     private:
         po::variables_map vm;
-        boost::timer::cpu_timer runtime;
     public:
+        boost::timer::cpu_timer runtime;
         long expansions;
-        Metadata(int argc, char *argv[]):expansions(0){
+        long plan_attempts;
+        Metadata(int argc, char *argv[]):expansions(0),plan_attempts(0){
             vm = parse_arguments(argc, argv);
         }
 
