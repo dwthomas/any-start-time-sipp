@@ -319,7 +319,7 @@ class SafeIntervals{
             _visited[loc_ind][interval_i] = node_ind;
         }
 
-        inline std::size_t waits(const Map& map, const Action& action, std::vector<double>& res, std::vector<std::size_t>& res_ind) const{
+        inline std::size_t waits(const Map& map, const Action& action, std::vector<double>& res, std::vector<std::size_t>& res_ind, std::size_t limitation = std::numeric_limits<std::size_t>::max()) const{
             double t = action.source.time;
             double action_duration = action.destination.time - t;
             double wait = 0;
@@ -340,7 +340,7 @@ class SafeIntervals{
             auto source_interval = get_interval(t, inds[0]);
             res.clear();
             res_ind.clear();
-            while((t + wait + 0.5*action_duration) <= source_interval->second){
+            while((t + wait + 0.5*action_duration) <= source_interval->second && res.size() < limitation){
                 double twait = wait;
                 auto destination_interval = get_interval(t, inds[1]);
                 auto edge_interval = get_interval(t, inds[2]);

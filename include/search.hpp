@@ -1,5 +1,7 @@
 #pragma once
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <unordered_set>
 
 #include "metadata.hpp"
@@ -10,15 +12,15 @@
 #include "heuristic.hpp"
 #include "structs.hpp"
 
-
-inline void debug_open(const NodeOpen<sippNode>& open){
-    NodeOpen<sippNode> open_copy;
+template <typename NodeT>
+inline void debug_open(const NodeOpen<NodeT>& open){
+    NodeOpen<NodeT> open_copy;
     for (auto element :open){
         open_copy.emplace(element);
     }
     std::cout << "open:\n";
     while(!open_copy.empty()){
-        sippNode::nodes[open_copy.top()].debug();
+        NodeT::nodes[open_copy.top()].debug();
         open_copy.pop();
     }
     std::cout << "\n";
@@ -155,6 +157,8 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 }
 
 
+
+
 inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata, bool resume = false){
     ++(metadata.plan_attempts);
     if (!resume){
@@ -207,6 +211,166 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
             return;
         }
         pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
+    }
+    std::cout << "No path found\n";
+}
+
+/*
+inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
+                                           NodeOpen<partialPdapNode>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
+    double dt;
+    const partialPdapNode& current_node = partialPdapNode::getNode(cnode);
+    Action act(current_node.s, State(0, 0, 0));
+    //auto interval_starts = std::vector<std::pair<double, double>>();
+    double min_f = std::numeric_limits<double>::infinity();
+    for (int m_x = -1; m_x <=1; m_x++){
+        act.destination.x = current_node.s.x + m_x;
+        for (int m_y = -1; m_y <=1; m_y++){
+            if (m_x == 0 && m_y == 0){
+                continue;
+            }
+            else if (m_x == 0 || m_y == 0) {
+                dt = agent_speed;
+            }
+            else{
+                dt = sqrt2()*agent_speed;
+            }
+            act.destination.y = current_node.s.y + m_y;
+            if (!map.inBounds(act.destination.x, act.destination.y)){
+                continue;
+            }
+            act.destination.time = current_node.s.time + dt;
+            std::size_t loc_ind = safe_intervals.waits(map, act, waits_res, waits_res_ind, true, current_node.expansions);
+            double delta_prior = current_node.s.time - current_node.alpha;
+            act.destination.time = std::max(act.destination.time, waits_res[0]);
+            if (safe_intervals.isSafe(act, map)){ //&& !safe_intervals.markvisited(loc_ind, i)){
+                double intervalStart = safe_intervals.get_intervals(loc_ind,waits_res_ind[0])->first;
+                double intervalEnd = safe_intervals.get_intervals(loc_ind, waits_res_ind[0])->second;
+                double alpha = std::max(current_node.alpha, intervalStart - delta_prior);
+                double beta = std::min(current_node.beta, intervalEnd - delta_prior);
+                double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                std::size_t node_ind = safe_intervals.visited(loc_ind, current_node.expansions);
+                if (node_ind != std::numeric_limits<std::size_t>::max()){
+                    if (partialPdapNode::getNode(node_ind).s.time > act.destination.time){
+                        partialPdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, f, cnode);
+                        partialPdapNode::set_f(node_ind, f, 0);
+                        open.emplace(node_ind);
+                    }
+                    continue;
+                }
+                auto j = partialPdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, 0, cnode);
+                open.emplace(j);
+                safe_intervals.markvisited(loc_ind, current_node.expansions, j);
+
+                if (waits_res.size() == 2){
+                    act.destination.time = std::max(act.destination.time, waits_res[1]);
+                    f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                    if (f < min_f){
+                        min_f = f;
+                    }
+                }
+            }
+        }
+    }
+    partialPdapNode::set_f(cnode, min_f);
+    if (std::isfinite(min_f)){
+        open.emplace(cnode);
+    }
+    //std::cout << "\n";
+}
+*/
+
+
+inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
+                                           NodeOpen<partialPdapNode>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
+    double dt;
+    const partialPdapNode& current_node = partialPdapNode::getNode(cnode);
+    Action act(current_node.s, State(0, 0, 0));
+    //auto interval_starts = std::vector<std::pair<double, double>>();
+    double min_f = std::numeric_limits<double>::infinity();
+    for (int m_x = -1; m_x <=1; m_x++){
+        act.destination.x = current_node.s.x + m_x;
+        for (int m_y = -1; m_y <=1; m_y++){
+            if (m_x == 0 && m_y == 0){
+                continue;
+            }
+            else if (m_x == 0 || m_y == 0) {
+                dt = agent_speed;
+            }
+            else{
+                dt = sqrt2()*agent_speed;
+            }
+            act.destination.y = current_node.s.y + m_y;
+            if (!map.inBounds(act.destination.x, act.destination.y)){
+                continue;
+            }
+            act.destination.time = current_node.s.time + dt;
+            std::size_t loc_ind = safe_intervals.waits(map, act, waits_res, waits_res_ind, current_node.expansions + 2);
+            
+            std::size_t i = current_node.expansions;
+            double delta_prior = current_node.s.time - current_node.alpha;
+            act.destination.time = std::max(act.destination.time, waits_res[i]);
+            if (safe_intervals.isSafe(act, map)){ //&& !safe_intervals.markvisited(loc_ind, i)){
+                if (waits_res.size() > i){
+                    double intervalStart = safe_intervals.get_intervals(loc_ind,waits_res_ind[i])->first;
+                    double intervalEnd = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->second;
+                    double alpha = std::max(current_node.alpha, intervalStart - delta_prior);
+                    double beta = std::min(current_node.beta, intervalEnd - delta_prior);
+                    double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                    std::size_t node_ind = safe_intervals.visited(loc_ind, i);
+                    if (node_ind != std::numeric_limits<std::size_t>::max()){
+                        if (partialPdapNode::getNode(node_ind).s.time > act.destination.time){
+                            partialPdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, f, cnode);
+                            partialPdapNode::set_f(node_ind, f, 0);
+                            open.emplace(node_ind);
+                        }
+                        continue;
+                    }
+                    auto j = partialPdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, 0, cnode);
+                    open.emplace(j);
+                    safe_intervals.markvisited(loc_ind, i, j);
+                    if (waits_res.size() > i+1){
+                        act.destination.time = std::max(act.destination.time, waits_res[i+1]);
+                        double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                        if (f < min_f){
+                            min_f = f;
+                        }
+                    }
+                }
+            }
+            
+            
+        }
+    }
+    
+    if (std::isfinite(min_f)){
+        partialPdapNode::set_f(cnode, min_f);
+        open.emplace(cnode);
+    }
+    //std::cout << "\n";
+    //std::cout << "\n";
+}
+
+inline void partialPdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+    metadata.runtime.start();
+    std::vector<double> waits_res;
+    std::vector<std::size_t> waits_res_ind;
+    NodeOpen<partialPdapNode> open;
+    auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
+    double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
+    auto current_node = partialPdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0.0, start_interval->second, f, 0,std::numeric_limits<std::size_t>::max());
+    safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
+    open.emplace(current_node);
+    while(!open.empty()){
+        current_node = open.top();
+        open.pop();
+        ++(metadata.expansions);
+        if (isGoal(partialPdapNode::getNode(current_node), goal)){
+            metadata.runtime.stop();
+            backtrack_path<partialPdapNode>(current_node);
+            return;
+        }
+        partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
     std::cout << "No path found\n";
 }

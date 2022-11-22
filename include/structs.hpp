@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <limits>
 
 struct State{
     int x;
@@ -28,3 +29,35 @@ struct Action{
         std::cout << destination.x << " " << destination.y << " " << destination.time << "\n";
     }
 };
+
+struct Subfunctional{
+    double alpha;
+    double beta;
+    double delta;
+    std::size_t node_ind;
+    Subfunctional(double _alpha, double _beta, double _delta, std::size_t _node_ind):alpha(_alpha),beta(_beta),delta(_delta),node_ind(_node_ind){};
+
+    inline void debug() const{
+        std::cout << alpha << " " << beta << " " << delta << "\n";
+    }
+
+    inline double arrival_time(double t) const{
+        if (t <= alpha){
+            return alpha + delta;
+        }
+        if (t <= beta){
+            return t + delta;
+        }
+        return std::numeric_limits<double>::infinity();
+    }
+};
+
+inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs){
+    if (rhs.beta > lhs.beta){
+        return false;
+    }
+    if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
+        return true;
+    }
+    return false;
+}

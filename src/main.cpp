@@ -10,6 +10,7 @@
   
 std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 std::vector<pdapNode>  pdapNode::nodes = std::vector<pdapNode>();
+std::vector<partialPdapNode>  partialPdapNode::nodes = std::vector<partialPdapNode>();
 
 inline bool check_path(const std::vector<State>& path, double start_time, const Map& map, const SafeIntervals& safe_intervals){
     if (path.size() == 0){
@@ -73,6 +74,11 @@ int main(int argc, char *argv[]){
         pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         std::cout << metadata.runtime.format() << "\n";
         std::cout << "PDAP\nExpansions:" << metadata.expansions << "\n";
+    }
+    else if (metadata.args()["search"].as<std::string>() == "partialpdap"){
+        partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        std::cout << metadata.runtime.format() << "\n";
+        std::cout << "partialPDAP\nExpansions:" << metadata.expansions << "\n";
     }
     else{
         std::cout << "Incorrect search algorithm specified: " << metadata.args()["search"].as<std::string>() << "\n";
