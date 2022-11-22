@@ -356,6 +356,7 @@ inline void partialPdapAStar(const State& start_state, const State& goal, double
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
     NodeOpen<partialPdapNode> open;
+    Functional functional;
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = partialPdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0.0, start_interval->second, f, 0,std::numeric_limits<std::size_t>::max());
@@ -365,12 +366,16 @@ inline void partialPdapAStar(const State& start_state, const State& goal, double
         current_node = open.top();
         open.pop();
         ++(metadata.expansions);
-        if (isGoal(partialPdapNode::getNode(current_node), goal)){
-            metadata.runtime.stop();
-            backtrack_path<partialPdapNode>(current_node);
-            return;
+        auto cn = partialPdapNode::getNode(current_node);
+        if (isGoal(cn, goal)){
+            double alph = functional.emplace_back(cn.alpha, cn.beta, cn.delta(), current_node);
+            if (alph >= start_interval->second){
+                break;
+            }
         }
         partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
-    std::cout << "No path found\n";
+    metadata.runtime.stop();
+    backtrack_path<partialPdapNode>(functional.domain[0.0].node_ind);
+    std::cout << functional.domain.size() << " subfunctionals\n";
 }

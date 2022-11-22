@@ -85,6 +85,10 @@ struct pdapNode{
                intervalStart == rhs.intervalStart;
     }
 
+    inline double delta()const{
+        return s.time - alpha;
+    }
+
     static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t parent){
         std::size_t ind = nodes.size();
         nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, parent);
@@ -140,6 +144,10 @@ struct partialPdapNode{
         return s.x == rhs.s.x &&
                s.y == rhs.s.y && 
                intervalStart == rhs.intervalStart;
+    }
+
+    inline double delta()const{
+        return s.time - alpha;
     }
 
     static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t expansions, std::size_t parent){

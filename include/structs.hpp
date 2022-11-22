@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <limits>
+#include <vector>
+#include <boost/container/flat_map.hpp>
 
 struct State{
     int x;
@@ -35,6 +37,7 @@ struct Subfunctional{
     double beta;
     double delta;
     std::size_t node_ind;
+    Subfunctional() = default;
     Subfunctional(double _alpha, double _beta, double _delta, std::size_t _node_ind):alpha(_alpha),beta(_beta),delta(_delta),node_ind(_node_ind){};
 
     inline void debug() const{
@@ -52,6 +55,7 @@ struct Subfunctional{
     }
 };
 
+
 inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs){
     if (rhs.beta > lhs.beta){
         return false;
@@ -61,3 +65,39 @@ inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs){
     }
     return false;
 }
+
+inline double intersection(const Subfunctional& lhs, const Subfunctional& rhs){
+    if (rhs.beta > lhs.beta){
+        return lhs.beta;
+    }
+    return rhs.alpha + rhs.delta - lhs.delta;
+}
+
+struct Functional{
+    boost::container::flat_map<double, Subfunctional> domain;
+
+    inline double arrival_time(double t) const{
+        auto it = domain.upper_bound(t);
+        if (it != domain.begin()){
+            it = std::prev(it);
+        }
+        return it->second.arrival_time(t); 
+    }
+
+    inline double emplace_back(double alpha, double beta, double delta, std::size_t node_ind){
+        Subfunctional prospect(alpha, beta, delta, node_ind);
+        if (domain.size()==0){
+            domain[0.0] = prospect;
+            return prospect.alpha;
+        }
+        auto encumbent_it = domain.nth(domain.size()-1);
+        auto encumbent = encumbent_it->second;
+        if (!dominates(encumbent, prospect)){
+            double minimization_image = intersection(encumbent, prospect);
+            assert(minimization_image > encumbent_it->first);
+            domain[minimization_image] = prospect;
+            return prospect.alpha;
+        }
+        return encumbent.alpha;
+    }
+};
