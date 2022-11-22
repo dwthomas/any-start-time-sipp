@@ -6,7 +6,7 @@ project('pdap', 'cpp',
 
 subdir('src')
 
-boost_dep = dependency('boost', modules :['program_options','timer'])
+boost_dep = dependency('boost', static:true,modules :['program_options','timer'])
 
 incdir = include_directories('include')
 
