@@ -85,6 +85,10 @@ struct pdapNode{
                intervalStart == rhs.intervalStart;
     }
 
+    inline double delta()const{
+        return s.time - alpha;
+    }
+
     static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t parent){
         std::size_t ind = nodes.size();
         nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, parent);
@@ -112,6 +116,77 @@ struct pdapNode{
     inline void debug() const{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
+    }
+};
+
+struct partialPdapNode{
+    State s; // s.time = Delta + alpha
+    double alpha;
+    double beta;
+    double intervalStart;
+    double f;
+    std::size_t expansions;
+    std::size_t parent;
+
+    partialPdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _expansions, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),expansions(_expansions),parent(_parent){};
+
+    static std::vector<partialPdapNode> nodes;
+    
+    inline std::size_t hash() const{
+        std::size_t seed = 0;
+        boost::hash_combine(seed, s.x);
+        boost::hash_combine(seed, s.y);
+        boost::hash_combine(seed, intervalStart);
+        return seed;
+    }
+
+    inline bool equals(const pdapNode& rhs) const{
+        return s.x == rhs.s.x &&
+               s.y == rhs.s.y && 
+               intervalStart == rhs.intervalStart;
+    }
+
+    inline double delta()const{
+        return s.time - alpha;
+    }
+
+    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t expansions, std::size_t parent){
+        std::size_t ind = nodes.size();
+        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, expansions, parent);
+        return ind;
+    }
+
+    static inline partialPdapNode getNode(std::size_t ind){
+        assert(ind < nodes.size());
+        return nodes[ind];
+    }
+    
+     static inline void remove(std::size_t ind){
+        assert(ind == (nodes.size()-1));
+        nodes.pop_back();
+    }
+
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f,std::size_t cnode){
+        nodes[node_ind].f = f;
+        nodes[node_ind].s.time = time;
+        nodes[node_ind].parent = cnode;
+        nodes[node_ind].alpha = alpha;
+        nodes[node_ind].beta = beta;
+    }
+
+    static inline void set_f(std::size_t ind, double f, std::size_t expansions = std::numeric_limits<std::size_t>::max()){
+        nodes[ind].f = f;
+        if (expansions == std::numeric_limits<std::size_t>::max()){
+            nodes[ind].expansions += 1;
+        }
+        else{
+            nodes[ind].expansions = expansions;
+        }
+    }
+
+    inline void debug() const{
+        s.debug();
+        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << " exp: " << expansions << "\n";
     }
 };
 
