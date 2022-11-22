@@ -1,0 +1,1 @@
+eval "$(head -${SLURM_ARRAY_TASK_ID} $1) | tail -1"
