@@ -6,4 +6,5 @@
 #SBATCH --array=1-15                 # Array range
 #SBATCH -p compute
 cd /home/aifs2/devin/Documents/pdap/scripts/
+echo "$(head -${SLURM_ARRAY_TASK_ID} /home/aifs2/devin/Documents/pdap/scripts/commands.run | tail -1)"
 eval "$(head -${SLURM_ARRAY_TASK_ID} /home/aifs2/devin/Documents/pdap/scripts/commands.run | tail -1)"
