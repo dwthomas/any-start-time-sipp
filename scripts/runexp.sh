@@ -5,4 +5,5 @@
 #SBATCH --ntasks=1                  # Run a single task
 #SBATCH --array=1-15                 # Array range
 #SBATCH -p compute
-eval "$(head -${SLURM_ARRAY_TASK_ID} $1 | tail -1) "
+cd /home/aifs2/devin/Documents/pdap/scripts/
+eval "$(head -${SLURM_ARRAY_TASK_ID} /home/aifs2/devin/Documents/pdap/scripts/commands.run | tail -1)"
