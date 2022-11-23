@@ -2,6 +2,7 @@
 #pragma once
 
 
+#include "heuristic.hpp"
 #define SOURCE 0
 #define DESTINATION 1
 #define EDGE 2
@@ -227,7 +228,7 @@ class SafeIntervals{
             valid_until = until;
         }
 
-        inline bool isSafe(const Action& action, const Map& map) const{
+        inline bool isSafe(const Action& action, const Map& map, double agent_speed) const{
             safe_interval time = safe_interval();
             std::array<std::size_t, 3> ind;
             ind.fill(std::numeric_limits<std::size_t>::max());
@@ -252,9 +253,11 @@ class SafeIntervals{
                     return in_safe_interval(_safe_intervals[ind[0]], time);
                     }
                 else{
-                    double dt = 0.5*(action.destination.time - action.source.time);
+                    double delta = eightWayDistance(action.source, action.destination, agent_speed);
+                    double dt = 0.5*(delta);
+                    double wait = action.destination.time - action.source.time;
                     time.first = action.source.time;
-                    time.second = action.source.time + dt;
+                    time.second = action.source.time + wait + dt;
                     if(!in_safe_interval(_safe_intervals[ind[0]], time)){
                         return false;
                     }
