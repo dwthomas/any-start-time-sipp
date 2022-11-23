@@ -39,15 +39,14 @@ inline bool isGoal(const NodeT& node, const State& goal ){
     return node.s.x == goal.x && node.s.y == goal.y;
 }
 
-template <typename NodeT>
-inline std::vector<State> backtrack_path(std::size_t node){
-    const NodeT& n = NodeT::getNode(node);
+inline std::vector<State> sipp_backtrack_path(std::size_t node){
+    const sippNode& n = sippNode::getNode(node);
     std::vector<State> path = {n.s};
     if (n.parent != std::numeric_limits<std::size_t>::max()){
-        NodeT node = NodeT::getNode(n.parent);
+        sippNode node = sippNode::getNode(n.parent);
         path.emplace_back(node.s);
         while(node.parent != std::numeric_limits<std::size_t>::max()){
-            node = NodeT::getNode(node.parent);
+            node = sippNode::getNode(node.parent);
             path.emplace_back(node.s);        
         }
     }
@@ -56,6 +55,25 @@ inline std::vector<State> backtrack_path(std::size_t node){
     }
     return std::vector<State>(path.rbegin(), path.rend());
 }
+
+template <typename NodeT>
+inline void pdap_backtrack_path(std::size_t node){
+    const NodeT& n = NodeT::getNode(node);
+    std::vector<NodeT> path = {n};
+    if (n.parent != std::numeric_limits<std::size_t>::max()){
+        NodeT node = NodeT::getNode(n.parent);
+        path.emplace_back(node);
+        while(node.parent != std::numeric_limits<std::size_t>::max()){
+            node = NodeT::getNode(node.parent);
+            path.emplace_back(node);        
+        }
+    }
+    for (auto it = path.rbegin(); it != path.rend(); it++){
+        it->report();
+    }
+    //return std::vector<State>(path.rbegin(), path.rend());
+}
+
 
 inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
                                     NodeOpen<sippNode>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
@@ -84,7 +102,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
             int wrs = waits_res.size();
             for (int i = 0; i < wrs; i++){
                 act.destination.time = std::max(act.destination.time, waits_res[i]); 
-                if (safe_intervals.isSafe(act, map)){
+                if (safe_intervals.isSafe(act, map, agent_speed)){
                     double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                     std::size_t node_ind = safe_intervals.visited(loc_ind, i);
                     double intervalStart = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->first;
@@ -105,7 +123,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
 }
 
 inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
-                                           NodeOpen<pdapNode>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
+                                           boost::heap::priority_queue<std::size_t, boost::heap::compare<pdapNodeGreater<pdapNode>>>& open, std::vector<double>& waits_res, std::vector<std::size_t>& waits_res_ind){
     double dt;
     const pdapNode& current_node = pdapNode::getNode(cnode);
     Action act(current_node.s, State(0, 0, 0));
@@ -132,11 +150,11 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
             for (int i = 0; i < wrs; i++){
                 double delta_prior = current_node.s.time - current_node.alpha;
                 act.destination.time = std::max(act.destination.time, waits_res[i]);
-                if (safe_intervals.isSafe(act, map)){ //&& !safe_intervals.markvisited(loc_ind, i)){
+                if (safe_intervals.isSafe(act, map,agent_speed)){ //&& !safe_intervals.markvisited(loc_ind, i)){
                     double intervalStart = safe_intervals.get_intervals(loc_ind,waits_res_ind[i])->first;
                     double intervalEnd = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->second;
                     double alpha = std::max(current_node.alpha, intervalStart - delta_prior);
-                    double beta = std::min(current_node.beta, intervalEnd - delta_prior);
+                    double beta = std::min(current_node.beta, intervalEnd - delta_prior - 0.5*dt);
                     double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                     std::size_t node_ind = safe_intervals.visited(loc_ind, i);
                     if (node_ind != std::numeric_limits<std::size_t>::max()){
@@ -180,7 +198,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
         ++(metadata.expansions);
         if (isGoal(sippNode::getNode(current_node), goal)){
             metadata.runtime.stop();
-            return backtrack_path<sippNode>(current_node);
+            return sipp_backtrack_path(current_node);
         }
         if (sippNode::getNode(current_node).s.time > 1000.0){
             std::cout << "overtime \n";
@@ -195,7 +213,8 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     metadata.runtime.start();
     std::vector<double> waits_res;
     std::vector<std::size_t> waits_res_ind;
-    NodeOpen<pdapNode> open;
+    //NodeOpen<pdapNode> open;
+    boost::heap::priority_queue<std::size_t, boost::heap::compare<pdapNodeGreater<pdapNode>>> open;
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = pdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0.0, start_interval->second, f, std::numeric_limits<std::size_t>::max());
@@ -207,7 +226,7 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
         ++(metadata.expansions);
         if (isGoal(pdapNode::getNode(current_node), goal)){
             metadata.runtime.stop();
-            backtrack_path<pdapNode>(current_node);
+            pdap_backtrack_path<pdapNode>(current_node);
             return;
         }
         pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
@@ -310,12 +329,12 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
             std::size_t i = current_node.expansions;
             double delta_prior = current_node.s.time - current_node.alpha;
             act.destination.time = std::max(act.destination.time, waits_res[i]);
-            if (safe_intervals.isSafe(act, map)){ //&& !safe_intervals.markvisited(loc_ind, i)){
+            if (safe_intervals.isSafe(act, map, agent_speed)){ //&& !safe_intervals.markvisited(loc_ind, i)){
                 if (waits_res.size() > i){
                     double intervalStart = safe_intervals.get_intervals(loc_ind,waits_res_ind[i])->first;
                     double intervalEnd = safe_intervals.get_intervals(loc_ind, waits_res_ind[i])->second;
                     double alpha = std::max(current_node.alpha, intervalStart - delta_prior);
-                    double beta = std::min(current_node.beta, intervalEnd - delta_prior);
+                    double beta = std::min(current_node.beta, intervalEnd - delta_prior - 0.5*dt);
                     double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                     std::size_t node_ind = safe_intervals.visited(loc_ind, i);
                     if (node_ind != std::numeric_limits<std::size_t>::max()){
@@ -376,6 +395,6 @@ inline void partialPdapAStar(const State& start_state, const State& goal, double
         partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
     }
     metadata.runtime.stop();
-    backtrack_path<partialPdapNode>(functional.domain[0.0].node_ind);
+    pdap_backtrack_path<partialPdapNode>(functional.domain[0.0].node_ind);
     std::cout << functional.domain.size() << " subfunctionals\n";
 }

@@ -12,21 +12,21 @@ std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 std::vector<pdapNode>  pdapNode::nodes = std::vector<pdapNode>();
 std::vector<partialPdapNode>  partialPdapNode::nodes = std::vector<partialPdapNode>();
 
-inline bool check_path(const std::vector<State>& path, double start_time, const Map& map, const SafeIntervals& safe_intervals){
+inline bool check_path(const std::vector<State>& path, double start_time, const Map& map, const SafeIntervals& safe_intervals, double agent_speed){
     if (path.size() == 0){
         return false;
     }
     State original(path[0].x, path[0].y, 0.0);
     Action act(original, path[0]);
     act.destination.time += start_time;
-    if (!safe_intervals.isSafe(act, map)){
+    if (!safe_intervals.isSafe(act, map, agent_speed)){
         return false;
     }
     for (std::size_t i = 1; i < path.size();i++){
         act.source = path[i-1];
         act.destination = path[i];
         act.destination.time += start_time;
-        if (!safe_intervals.isSafe(act, map)){
+        if (!safe_intervals.isSafe(act, map, agent_speed)){
             return false;
         }
     }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     if(metadata.args()["search"].as<std::string>() == "sipp"){
         auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         double rts = 0.0;
-        while(!check_path(path, start_time+rts, map, safe_intervals) &&
+        while(!check_path(path, start_time+rts, map, safe_intervals, agent_speed) &&
                          start_time + rts <= metadata.args()["startendt"].as<double>()){
             if (path.size() == 0){
                 break;
@@ -66,9 +66,23 @@ int main(int argc, char *argv[]){
             path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata, true);
             rts = metadata.runtime.elapsed().user*0.000000001;// conver to second from nanosecond
         }
-        std::cout << "path_check: " <<  check_path(path, start_time, map, safe_intervals) << "\n";
         std::cout << metadata.runtime.format() << "\n";
         std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n"; 
+        double until = 0;
+        double guess = 0.001;
+        for (int i = 0; i < 100;i++){
+            if (check_path(path, start_time+guess, map, safe_intervals, agent_speed)){
+                until = guess;
+                guess = 2*guess; 
+            }
+            else{
+                guess = (guess + until)*0.5;
+            }
+            if (guess - until < 0.0001){
+                break;
+            }
+        }
+        std::cout << "Valid until: " << until << "\n"; 
     }
     else if (metadata.args()["search"].as<std::string>() == "pdap"){
         pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);

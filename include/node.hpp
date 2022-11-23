@@ -117,6 +117,10 @@ struct pdapNode{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
     }
+
+    inline void report() const{
+        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta() << "\n";
+    }
 };
 
 struct partialPdapNode{
@@ -188,6 +192,9 @@ struct partialPdapNode{
         s.debug();
         std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << " exp: " << expansions << "\n";
     }
+    inline void report() const{
+        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta() << "\n";
+    }
 };
 
 template <typename NodeT>
@@ -222,6 +229,22 @@ struct NodeGreater{
         const NodeT& lhs = NodeT::nodes[lhs_i];
         const NodeT& rhs = NodeT::nodes[rhs_i];
         if (lhs.f == rhs.f) {
+            return lhs.s.time < rhs.s.time;
+        }
+        return lhs.f > rhs.f;
+    }
+};
+
+
+template <typename NodeT>
+struct pdapNodeGreater{
+    inline bool operator()(std::size_t lhs_i, std::size_t rhs_i) const{
+        const NodeT& lhs = NodeT::nodes[lhs_i];
+        const NodeT& rhs = NodeT::nodes[rhs_i];
+        if (lhs.f == rhs.f) {
+            if(lhs.s.time == rhs.s.time){
+                return lhs.alpha < rhs.alpha;
+            }
             return lhs.s.time < rhs.s.time;
         }
         return lhs.f > rhs.f;
