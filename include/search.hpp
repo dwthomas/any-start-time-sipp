@@ -343,7 +343,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
                             partialPdapNode::set_f(node_ind, f, 0);
                             open.emplace(node_ind);
                         }
-                        continue;
+                        //continue;
                     }
                     auto j = partialPdapNode::newNode(act.destination.x, act.destination.y, intervalStart, act.destination.time, alpha, beta, f, 0, cnode);
                     open.emplace(j);
@@ -381,18 +381,28 @@ inline void partialPdapAStar(const State& start_state, const State& goal, double
     auto current_node = partialPdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0.0, start_interval->second, f, 0,std::numeric_limits<std::size_t>::max());
     safe_intervals.markvisited(map.get_safe_interval_ind(start_state), 0, current_node);
     open.emplace(current_node);
+    double lower_bound = 0.0;
+    double max_query = metadata.args()["maxquery"].as<double>();
     while(!open.empty()){
         current_node = open.top();
-        open.pop();
-        ++(metadata.expansions);
         auto cn = partialPdapNode::getNode(current_node);
+        open.pop();
+        if (cn.f < lower_bound){
+            continue;
+        }
+        lower_bound = cn.f;
+        ++(metadata.expansions);
         if (isGoal(cn, goal)){
             double alph = functional.emplace_back(cn.alpha, cn.beta, cn.delta(), current_node);
-            if (alph >= start_interval->second){
+            //std::cout <<"alpha: " << alph << ", second: " << start_interval->second << "\n";
+            //debug_open(open);
+            if (alph >= max_query){
                 break;
             }
         }
-        partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
+        if (functional.check_back(current_node)){
+            partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, waits_res, waits_res_ind);
+        }
     }
     metadata.runtime.stop();
     pdap_backtrack_path<partialPdapNode>(functional.domain[0.0].node_ind);

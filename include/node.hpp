@@ -197,6 +197,63 @@ struct partialPdapNode{
     }
 };
 
+
+struct Functional{
+    boost::container::flat_map<double, Subfunctional> domain;
+
+    inline double arrival_time(double t) const{
+        auto it = domain.upper_bound(t);
+        if (it != domain.begin()){
+            it = std::prev(it);
+        }
+        return it->second.arrival_time(t); 
+    }
+
+    inline double check_back(std::size_t node_ind){
+        const partialPdapNode& cn = partialPdapNode::getNode(node_ind);
+        Subfunctional prospect(cn.alpha, cn.beta, cn.delta(), node_ind);
+        if (domain.size()==0){
+            return true;
+        }
+        auto encumbent_it = domain.nth(domain.size()-1);
+        auto encumbent = encumbent_it->second;
+        if (!dominates(encumbent, prospect)){
+            return true;
+        }
+        return false;
+    }
+
+    inline double emplace_back(double alpha, double beta, double delta, std::size_t node_ind){
+        Subfunctional prospect(alpha, beta, delta, node_ind);
+        prospect.debug();
+        debug();
+        if (domain.size()==0){
+            domain[0.0] = prospect;
+            return std::max(0.0, prospect.alpha);
+        }
+        auto encumbent_it = domain.nth(domain.size()-1);
+        auto encumbent = encumbent_it->second;
+        if (!dominates(encumbent, prospect)){
+            std::cout << "non dom\n";
+            encumbent.debug();
+            prospect.debug();
+            double minimization_image = intersection(encumbent, prospect);
+            std::cout << minimization_image << "\n";
+            assert(minimization_image > encumbent_it->first);
+            domain[minimization_image] = prospect;
+            return std::max(minimization_image, prospect.alpha);
+        }
+        return std::max(encumbent_it->first, encumbent.alpha);
+    }
+
+    inline void debug() const{
+        for (const auto& it: domain){
+            std::cout << it.first << ": ";
+            it.second.debug();
+        }
+    }
+};
+
 template <typename NodeT>
 struct NodeHash{
     inline std::size_t operator()(std::size_t ind) const{
