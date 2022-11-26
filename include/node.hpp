@@ -7,13 +7,16 @@
 #include "structs.hpp"
 #include "node.hpp"
 
+struct Functional;
+inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs, const Functional& functional);
+
 struct sippNode{
     State s;
-    double intervalStart;
+    std::size_t intervalInd;
     double f;
     std::size_t parent;
 
-    sippNode(int _x, int _y, double _intervalStart, double _t, double _f, std::size_t _parent):s(_x,_y,_t),intervalStart(_intervalStart),f(_f),parent(_parent){};
+    sippNode(int _x, int _y, std::size_t _intervalInd, double _t, double _f, std::size_t _parent):s(_x,_y,_t),intervalInd(_intervalInd),f(_f),parent(_parent){};
 
     static std::vector<sippNode> nodes;
     
@@ -21,19 +24,19 @@ struct sippNode{
         std::size_t seed = 0;
         boost::hash_combine(seed, s.x);
         boost::hash_combine(seed, s.y);
-        boost::hash_combine(seed, intervalStart);
+        boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const sippNode& rhs) const{
         return s.x == rhs.s.x &&
                s.y == rhs.s.y && 
-               intervalStart == rhs.intervalStart;
+               intervalInd == rhs.intervalInd;
     }
 
-    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double f, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalStart, t, f, parent);
+        nodes.emplace_back(x, y, intervalInd, t, f, parent);
         return ind;
     }
 
@@ -55,7 +58,7 @@ struct sippNode{
 
     inline void debug() const{
         s.debug();
-        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
+        std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << "\n";
     }
 };
 
@@ -63,11 +66,11 @@ struct pdapNode{
     State s; // s.time = Delta + alpha
     double alpha;
     double beta;
-    double intervalStart;
+    std::size_t intervalInd;
     double f;
     std::size_t parent;
 
-    pdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),parent(_parent){};
+    pdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _f, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalInd(_intervalInd),f(_f),parent(_parent){};
 
     static std::vector<pdapNode> nodes;
     
@@ -75,23 +78,23 @@ struct pdapNode{
         std::size_t seed = 0;
         boost::hash_combine(seed, s.x);
         boost::hash_combine(seed, s.y);
-        boost::hash_combine(seed, intervalStart);
+        boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const pdapNode& rhs) const{
         return s.x == rhs.s.x &&
                s.y == rhs.s.y && 
-               intervalStart == rhs.intervalStart;
+               intervalInd == rhs.intervalInd;
     }
 
     inline double delta()const{
         return s.time - alpha;
     }
 
-    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, parent);
+        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, f, parent);
         return ind;
     }
 
@@ -115,7 +118,7 @@ struct pdapNode{
 
     inline void debug() const{
         s.debug();
-        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << "\n";
+        std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << "\n";
     }
 
     inline void report() const{
@@ -127,12 +130,13 @@ struct partialPdapNode{
     State s; // s.time = Delta + alpha
     double alpha;
     double beta;
-    double intervalStart;
+    std::size_t intervalInd;
     double f;
+    double open_f;
     std::size_t expansions;
     std::size_t parent;
 
-    partialPdapNode(int _x, int _y, double _intervalStart, double _t, double _alpha, double _beta, double _f, std::size_t _expansions, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalStart(_intervalStart),f(_f),expansions(_expansions),parent(_parent){};
+    partialPdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _f, std::size_t _expansions, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalInd(_intervalInd),f(_f),open_f(f),expansions(_expansions),parent(_parent){};
 
     static std::vector<partialPdapNode> nodes;
     
@@ -140,23 +144,23 @@ struct partialPdapNode{
         std::size_t seed = 0;
         boost::hash_combine(seed, s.x);
         boost::hash_combine(seed, s.y);
-        boost::hash_combine(seed, intervalStart);
+        boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const pdapNode& rhs) const{
         return s.x == rhs.s.x &&
                s.y == rhs.s.y && 
-               intervalStart == rhs.intervalStart;
+               intervalInd == rhs.intervalInd;
     }
 
     inline double delta()const{
         return s.time - alpha;
     }
 
-    static inline std::size_t newNode(int x, int y, double intervalStart, double t, double alpha, double beta, double f, std::size_t expansions, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double f, std::size_t expansions, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalStart, t, alpha, beta, f, expansions, parent);
+        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, f, expansions, parent);
         return ind;
     }
 
@@ -179,7 +183,7 @@ struct partialPdapNode{
     }
 
     static inline void set_f(std::size_t ind, double f, std::size_t expansions = std::numeric_limits<std::size_t>::max()){
-        nodes[ind].f = f;
+        nodes[ind].open_f = f;
         if (expansions == std::numeric_limits<std::size_t>::max()){
             nodes[ind].expansions += 1;
         }
@@ -190,7 +194,7 @@ struct partialPdapNode{
 
     inline void debug() const{
         s.debug();
-        std::cout << "g: " << s.time << " is:" << intervalStart<< " f: " << f << " exp: " << expansions << "\n";
+        std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << " exp: " << expansions << "\n";
     }
     inline void report() const{
         std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta() << "\n";
@@ -211,13 +215,13 @@ struct Functional{
 
     inline double check_back(std::size_t node_ind){
         const partialPdapNode& cn = partialPdapNode::getNode(node_ind);
-        Subfunctional prospect(cn.alpha, cn.beta, cn.delta(), node_ind);
+        Subfunctional prospect(cn.alpha, cn.beta, cn.f, node_ind);
         if (domain.size()==0){
             return true;
         }
         auto encumbent_it = domain.nth(domain.size()-1);
         auto encumbent = encumbent_it->second;
-        if (!dominates(encumbent, prospect)){
+        if (!dominates(encumbent, prospect, *this)){
             return true;
         }
         return false;
@@ -225,20 +229,17 @@ struct Functional{
 
     inline double emplace_back(double alpha, double beta, double delta, std::size_t node_ind){
         Subfunctional prospect(alpha, beta, delta, node_ind);
-        prospect.debug();
-        debug();
+        //prospect.debug();
+        //debug();
         if (domain.size()==0){
             domain[0.0] = prospect;
             return std::max(0.0, prospect.alpha);
         }
         auto encumbent_it = domain.nth(domain.size()-1);
         auto encumbent = encumbent_it->second;
-        if (!dominates(encumbent, prospect)){
-            std::cout << "non dom\n";
-            encumbent.debug();
-            prospect.debug();
+        if (!dominates(encumbent, prospect, *this)){
             double minimization_image = intersection(encumbent, prospect);
-            std::cout << minimization_image << "\n";
+
             assert(minimization_image > encumbent_it->first);
             domain[minimization_image] = prospect;
             return std::max(minimization_image, prospect.alpha);
@@ -253,6 +254,20 @@ struct Functional{
         }
     }
 };
+
+
+inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs, const Functional& functional){
+    if (rhs.beta > lhs.beta){
+        return false;
+    }
+    if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
+        return true;
+    }
+    else if(functional.arrival_time(rhs.beta) >= functional.arrival_time(rhs.beta) && functional.arrival_time(rhs.alpha) >= functional.arrival_time(rhs.alpha)){
+        return true;
+    }
+    return false;
+}
 
 template <typename NodeT>
 struct NodeHash{
@@ -293,11 +308,10 @@ struct NodeGreater{
 };
 
 
-template <typename NodeT>
 struct pdapNodeGreater{
     inline bool operator()(std::size_t lhs_i, std::size_t rhs_i) const{
-        const NodeT& lhs = NodeT::nodes[lhs_i];
-        const NodeT& rhs = NodeT::nodes[rhs_i];
+        const pdapNode& lhs = pdapNode::nodes[lhs_i];
+        const pdapNode& rhs = pdapNode::nodes[rhs_i];
         if (lhs.f == rhs.f) {
             if(lhs.s.time == rhs.s.time){
                 return lhs.alpha < rhs.alpha;
@@ -305,6 +319,20 @@ struct pdapNodeGreater{
             return lhs.s.time < rhs.s.time;
         }
         return lhs.f > rhs.f;
+    }
+};
+
+struct partialPdapNodeGreater{
+    inline bool operator()(std::size_t lhs_i, std::size_t rhs_i) const{
+        const partialPdapNode& lhs = partialPdapNode::nodes[lhs_i];
+        const partialPdapNode& rhs = partialPdapNode::nodes[rhs_i];
+        if (lhs.open_f == rhs.open_f) {
+            if(lhs.s.time == rhs.s.time){
+                return lhs.alpha < rhs.alpha;
+            }
+            return lhs.s.time < rhs.s.time;
+        }
+        return lhs.open_f > rhs.open_f;
     }
 };
 

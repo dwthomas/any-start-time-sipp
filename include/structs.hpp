@@ -56,15 +56,7 @@ struct Subfunctional{
 };
 
 
-inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs){
-    if (rhs.beta > lhs.beta){
-        return false;
-    }
-    if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
-        return true;
-    }
-    return false;
-}
+
 
 inline double intersection(const Subfunctional& lhs, const Subfunctional& rhs){
     if (rhs.beta > lhs.beta){
