@@ -146,12 +146,12 @@ class SafeIntervals{
             }
         }
     public:
-        SafeIntervals(const std::vector<std::shared_ptr<DynamicObstacle>>& obs, const Map& map, double unsafe_time, double agent_speed):valid_until(0.0),forget_until(0.0),_obs(obs),_map(map){
+        SafeIntervals(const std::vector<std::shared_ptr<DynamicObstacle>>& obs, const Map& map, double unsafe_time, double agent_speed, const State& start_state, double startendt):valid_until(0.0),forget_until(0.0),_obs(obs),_map(map){
             std::size_t size = map.size;
             //unsafe_intervals.resize(4*size);
             _safe_intervals.resize(4*size);
             // need enough for all vertexes and neighboring edges.
-            generate(unsafe_time, agent_speed);
+            generate(unsafe_time, agent_speed, start_state, startendt);
         }
 
         void debug(const Map& map) const{
@@ -235,11 +235,12 @@ class SafeIntervals{
             }
             //check wait
             double wait_until = action.destination.time - action_duration;
-            safe_interval act_int(wait_until, action.destination.time);
+            safe_interval act_int(wait_until, std::numeric_limits<double>::infinity());
             if (source_interval->first > action.source.time || wait_until > source_interval->second){
                 if(debug){
                     std::cout << "invalid wait:" << action.source.time << " " << wait_until << "\n";
                     debug_interval(*source_interval);
+                    get_interval(action.source.time, 4*source_loc_ind, true);
                 }
                 return false;
             }
@@ -250,9 +251,18 @@ class SafeIntervals{
                 auto destination_interval = get_interval(action.destination.time, 4*destination_loc_ind, debug);
                 std::size_t destination_ind = _safe_intervals[4*destination_loc_ind].index_of(destination_interval);
                 const auto& inter = _edge_safe_intervals[source_loc_ind][source_ind].at(destination_loc_ind).at(destination_ind);
+                if(debug){
+                    debug_interval(act_int);
+                }
                 auto ub  = inter.upper_bound(act_int);
+                if(debug){
+                    debug_interval(*ub);
+                }
                 if (ub != inter.begin()){
                     --ub;
+                    if(debug){
+                        debug_interval(*ub);
+                    }
                 }
                 bool retval =  ub->first <= wait_until && wait_until <= ub->second;
                 if(debug){
@@ -277,7 +287,7 @@ class SafeIntervals{
                    destination.second - action_duration >= time ;
         }
 
-        void generate(double until, double agent_speed){
+        void generate(double until, double agent_speed, const State& start_state, double startendt){
             if (valid_until >= until){
                 return;
             }
@@ -309,6 +319,7 @@ class SafeIntervals{
             }
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
+            always_safe_until(start_state, startendt, _map);
             _edge_safe_intervals.resize(_map.width*_map.height);
             _visited.resize(_map.width*_map.height);
             Action act(State(0,0,0),State(0,0,0));

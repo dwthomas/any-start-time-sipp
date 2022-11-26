@@ -43,12 +43,11 @@ int main(int argc, char *argv[]){
                                                                                             metadata.args()["maxwait"].as<double>());
     double unsafe_time = metadata.args()["allendt"].as<double>();
     double agent_speed = metadata.args()["aspeed"].as<double>();
-    SafeIntervals safe_intervals = SafeIntervals(obs, map, unsafe_time, agent_speed);
-    //std::cout << "Safe intervals generated\n";
     State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), 0.0);
+    SafeIntervals safe_intervals = SafeIntervals(obs, map, unsafe_time, agent_speed, start_state, metadata.args()["startendt"].as<double>());
+    //std::cout << "Safe intervals generated\n";
     double start_time = metadata.args()["startt"].as<double>();
     assert(map.isSafe(start_state.x, start_state.y));
-    safe_intervals.always_safe_until(start_state, metadata.args()["startendt"].as<double>(), map);
     State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
     assert(map.isSafe(goal.x, goal.y));
     if(metadata.args()["search"].as<std::string>() == "sipp"){
