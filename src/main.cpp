@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
         std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n"; 
         double until = 0;
         double guess = 0.001;
-        assert(check_path(path, start_time, safe_intervals, agent_speed));
+        //assert(check_path(path, start_time, safe_intervals, agent_speed));
         for (int i = 0; i < 100;i++){
             if (check_path(path, start_time+guess, safe_intervals, agent_speed)){
                 until = guess;

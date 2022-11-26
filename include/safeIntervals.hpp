@@ -236,7 +236,7 @@ class SafeIntervals{
             //check wait
             double wait_until = action.destination.time - action_duration;
             safe_interval act_int(wait_until, std::numeric_limits<double>::infinity());
-            if (source_interval->first > action.source.time || wait_until > source_interval->second){
+            if (source_interval->first - action.source.time > epsilon()  || wait_until - source_interval->second > epsilon()){
                 if(debug){
                     std::cout << "invalid wait:" << action.source.time << " " << wait_until << "\n";
                     debug_interval(*source_interval);
@@ -264,9 +264,9 @@ class SafeIntervals{
                         debug_interval(*ub);
                     }
                 }
-                bool retval =  ub->first <= wait_until && wait_until <= ub->second;
+                bool retval =  (wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon();
                 if(debug){
-                    std::cout << "invalid edge traversal:" << wait_until << "\n";
+                    std::cout << "invalid edge traversal:" << wait_until << " "<< wait_until - ub->first << " " << ub->second - wait_until << "\n";
                     std::cout << source_loc_ind << " " << source_ind << " " << destination_loc_ind <<  " " << destination_ind << "\n";
                     debug_interval(*ub);
                     for(auto interval: inter){
