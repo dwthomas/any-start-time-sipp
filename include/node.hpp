@@ -174,9 +174,10 @@ struct partialPdapNode{
         nodes.pop_back();
     }
 
-    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f,std::size_t cnode){
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f, std::size_t expansions,std::size_t cnode){
         nodes[node_ind].f = f;
         nodes[node_ind].s.time = time;
+        nodes[node_ind].expansions = expansions;
         nodes[node_ind].parent = cnode;
         nodes[node_ind].alpha = alpha;
         nodes[node_ind].beta = beta;
@@ -247,12 +248,17 @@ struct Functional{
         return std::max(encumbent_it->first, encumbent.alpha);
     }
 
+    inline double finite_until() const{
+        return domain.nth(domain.size()-1)->second.beta;
+    }
+
     inline void debug() const{
         for (const auto& it: domain){
             std::cout << it.first << ": ";
             it.second.debug();
         }
     }
+
 };
 
 

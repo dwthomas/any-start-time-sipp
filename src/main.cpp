@@ -92,10 +92,10 @@ int main(int argc, char *argv[]){
         std::cout << "PDAP\nExpansions:" << metadata.expansions << "\n";
     }
     else if (metadata.args()["search"].as<std::string>() == "partialpdap"){
-        //auto functional = partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        auto functional = partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         std::cout << metadata.runtime.format() << "\n";
         std::cout << "partialPDAP\nExpansions:" << metadata.expansions << "\n";
-        //functional.debug();
+        functional.debug();
     }
     else{
         std::cout << "Incorrect search algorithm specified: " << metadata.args()["search"].as<std::string>() << "\n";

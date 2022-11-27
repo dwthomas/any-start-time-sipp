@@ -543,6 +543,52 @@ class SafeIntervals{
                 }
             }
         }
+
+        inline double partialwaits(const Action& action, std::size_t source_interval_ind, std::vector<std::size_t>& destination_interval_inds, std::vector<std::size_t>& edge_inds, double action_duration, std::size_t partial_i, bool debug = false) const{
+            double min_arrival_time = std::numeric_limits<double>::infinity();
+            destination_interval_inds.clear();
+            edge_inds.clear();
+            EdgeIntervalIndex eii;
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            eii.source_ind = source_interval_ind;
+            eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+            
+            double wait_until = action.destination.time - action_duration;
+            std::pair<double, double> time(wait_until, std::numeric_limits<double>::infinity());
+            if (debug){
+                std::cout << "debug waits\n";
+            }
+            std::size_t total_destination_intervals = _safe_intervals.at(eii.destination_loc_ind).size();
+            auto first_destination = _safe_intervals.at(eii.destination_loc_ind).upper_bound(time);
+            if (_safe_intervals.at(eii.destination_loc_ind).begin() != first_destination){
+                --first_destination;
+            }
+            for (eii.destination_ind = _safe_intervals.at(eii.destination_loc_ind).index_of(first_destination); eii.destination_ind < total_destination_intervals; eii.destination_ind++){
+                if (_edge_safe_intervals.contains(eii)){
+                    const auto & si = _edge_safe_intervals.at(eii);
+                    if (si.size() > partial_i){
+                        auto lb = si.nth(partial_i);
+                        if (action.source.time >= lb->first && action.source.time <= lb->second){
+                            if (debug){
+                                std::cout << action.source.time << "\n";
+                                eii.debug();
+                                debug_interval(*lb);
+                                std::cout << "\n";
+                            }
+                            destination_interval_inds.emplace_back(eii.destination_ind);
+                            edge_inds.emplace_back(si.index_of(lb));
+                        }
+                        ++lb;
+                        if (lb != si.end() && lb->first < min_arrival_time){
+                            min_arrival_time = lb->first;
+                        }
+                    }
+                    
+                   
+                }
+            }
+            return min_arrival_time;
+        }
         /*
         inline void waits(const Map& map, const Action& action, std::vector<std::pair<double, std::pair<double,double>>>& res) const{
             double t = action.source.time;
