@@ -336,5 +336,5 @@ struct partialPdapNodeGreater{
     }
 };
 
-template <typename NodeT>
-using NodeOpen = boost::heap::priority_queue<std::size_t, boost::heap::compare<NodeGreater<NodeT>>>;
+template <typename NodeT, typename SortNodeT>
+using NodeOpen = boost::heap::priority_queue<std::size_t, boost::heap::compare<SortNodeT>>;

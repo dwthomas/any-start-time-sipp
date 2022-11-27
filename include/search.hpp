@@ -12,9 +12,9 @@
 #include "heuristic.hpp"
 #include "structs.hpp"
 
-template <typename NodeT>
-inline void debug_open(const NodeOpen<NodeT>& open){
-    NodeOpen<NodeT> open_copy;
+template <typename NodeT, typename NodeSort>
+inline void debug_open(const NodeOpen<NodeT, NodeSort>& open){
+    NodeOpen<NodeT, NodeSort> open_copy;
     for (auto element :open){
         open_copy.emplace(element);
     }
@@ -76,7 +76,7 @@ inline void pdap_backtrack_path(std::size_t node){
 
 
 inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
-                                    NodeOpen<sippNode>& open, std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
+                                    NodeOpen<sippNode, NodeGreater<sippNode>>& open, std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
     const sippNode& current_node = sippNode::getNode(cnode);
     Action act(current_node.s, State(0, 0, 0));
@@ -137,7 +137,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
     }
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
-    NodeOpen<sippNode> open;
+    NodeOpen<sippNode, NodeGreater<sippNode>> open;
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = sippNode::newNode(start_state.x,start_state.y, 0, start_state.time, f, std::numeric_limits<std::size_t>::max());
     open.emplace(current_node);
@@ -156,7 +156,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
 }
 
 inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
-                                           NodeOpen<pdapNode>& open,
+                                           NodeOpen<pdapNode, NodeGreater<pdapNode>>& open,
                                             std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
     const pdapNode& current_node = pdapNode::getNode(cnode);
@@ -213,7 +213,7 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     metadata.runtime.start();
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
-    NodeOpen<pdapNode> open;
+    NodeOpen<pdapNode, NodeGreater<pdapNode>> open;
     //boost::heap::priority_queue<std::size_t, boost::heap::compare<pdapNodeGreater>> open;
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
