@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <boost/functional/hash.hpp>
-#include <boost/heap/priority_queue.hpp>
+#include <boost/heap/d_ary_heap.hpp>
 #include <iterator>
 #include "structs.hpp"
 #include "node.hpp"
@@ -337,4 +337,4 @@ struct partialPdapNodeGreater{
 };
 
 template <typename NodeT, typename SortNodeT>
-using NodeOpen = boost::heap::priority_queue<std::size_t, boost::heap::compare<SortNodeT>>;
+using NodeOpen = boost::heap::d_ary_heap<std::size_t, boost::heap::compare<SortNodeT>, boost::heap::arity<2>,boost::heap::mutable_<true>>;

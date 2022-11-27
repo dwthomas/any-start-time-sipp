@@ -76,7 +76,8 @@ inline void pdap_backtrack_path(std::size_t node){
 
 
 inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
-                                    NodeOpen<sippNode, NodeGreater<sippNode>>& open, std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
+                                    NodeOpen<sippNode, NodeGreater<sippNode>>& open, std::vector<NodeOpen<sippNode, NodeGreater<sippNode>>::handle_type>& handles, 
+                                    std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
     const sippNode& current_node = sippNode::getNode(cnode);
     Action act(current_node.s, State(0, 0, 0));
@@ -114,12 +115,13 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 if (node_ind != std::numeric_limits<std::size_t>::max()){
                     if (sippNode::getNode(node_ind).s.time > act.destination.time){
                         sippNode::set_arrival(node_ind, act.destination.time, f, cnode);
-                        open.emplace(node_ind);
+                        open.increase(handles.at(node_ind));
                     }
                     continue;
                 }
                 auto j = sippNode::newNode(act.destination.x, act.destination.y, intervalInd, act.destination.time, f, cnode);
-                open.emplace(j);
+                handles.emplace_back(open.emplace(j));
+                assert(handles.size() == sippNode::nodes.size());
                 safe_intervals.markvisited(act, current_node.intervalInd, destination_ind[i], edge_ind[i], j);
             }
         }
@@ -138,9 +140,11 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
     NodeOpen<sippNode, NodeGreater<sippNode>> open;
+    std::vector<NodeOpen<sippNode, NodeGreater<sippNode>>::handle_type> handles;
+    sippNode::nodes.clear();
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = sippNode::newNode(start_state.x,start_state.y, 0, start_state.time, f, std::numeric_limits<std::size_t>::max());
-    open.emplace(current_node);
+    handles.emplace_back(open.emplace(current_node));
     while(!open.empty()){
         current_node = open.top();
         open.pop();
@@ -149,14 +153,14 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
             metadata.runtime.stop();
             return sipp_backtrack_path(current_node);
         }
-        sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, destination_ind, edge_ind);
+        sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, handles, destination_ind, edge_ind);
     }
     metadata.runtime.stop();
     return {};
 }
 
 inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
-                                           NodeOpen<pdapNode, NodeGreater<pdapNode>>& open,
+                                           NodeOpen<pdapNode, NodeGreater<pdapNode>>& open, std::vector<NodeOpen<pdapNode, NodeGreater<pdapNode>>::handle_type>& handles,
                                             std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
     const pdapNode& current_node = pdapNode::getNode(cnode);
@@ -193,12 +197,13 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 if (node_ind != std::numeric_limits<std::size_t>::max()){
                     if (pdapNode::getNode(node_ind).s.time > act.destination.time){
                         pdapNode::set_arrival(node_ind, act.destination.time, alpha, beta, f, cnode);
-                        open.emplace(node_ind);
+                        open.increase(handles.at(node_ind));
                     }
                     continue;
                 }
                 auto j = pdapNode::newNode(act.destination.x, act.destination.y, intervalInd, act.destination.time, alpha, beta, f, cnode);
-                open.emplace(j);
+                handles.emplace_back(open.emplace(j));
+                assert(handles.size() == pdapNode::nodes.size());
                 safe_intervals.markvisited(act, current_node.intervalInd, destination_ind[i], edge_ind[i], j);
             }
         }
@@ -214,11 +219,14 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
     NodeOpen<pdapNode, NodeGreater<pdapNode>> open;
+    std::vector<NodeOpen<pdapNode, NodeGreater<pdapNode>>::handle_type> handles;
+    pdapNode::nodes.clear();
     //boost::heap::priority_queue<std::size_t, boost::heap::compare<pdapNodeGreater>> open;
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
     double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
     auto current_node = pdapNode::newNode(start_state.x, start_state.y, start_interval->first, start_state.time, 0, start_interval->second, f, std::numeric_limits<std::size_t>::max());
-    open.emplace(current_node);
+    handles.emplace_back(open.emplace(current_node));
+    assert(handles.size() == pdapNode::nodes.size());
     while(!open.empty()){
         current_node = open.top();
         open.pop();
@@ -228,7 +236,7 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
             pdap_backtrack_path<pdapNode>(current_node);
             return;
         }
-        pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, destination_ind, edge_ind);
+        pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, handles, destination_ind, edge_ind);
     }
 }
 
