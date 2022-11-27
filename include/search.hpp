@@ -102,12 +102,6 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
             safe_intervals.waits(act, current_node.intervalInd, destination_ind, edge_ind, dt);
             for (std::size_t i = 0; i < edge_ind.size(); i++){
                 act.destination.time = std::max(current_node.s.time + dt, safe_intervals.get_edge(act, current_node.intervalInd, destination_ind[i], edge_ind[i]).first + dt); 
-                if (!safe_intervals.valid(act, agent_speed)){
-                    std::cout << "invalid\n";
-                    act.debug();
-                    safe_intervals.valid(act, agent_speed, true);
-                    safe_intervals.waits(act, current_node.intervalInd, destination_ind, edge_ind, dt, true);
-                }
                 assert(safe_intervals.valid(act, agent_speed));
                 double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);

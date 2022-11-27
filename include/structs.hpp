@@ -4,6 +4,9 @@
 #include <limits>
 #include <vector>
 #include <boost/container/flat_map.hpp>
+#include <boost/functional/hash.hpp>
+
+typedef std::pair<double, double> safe_interval;
 
 struct State{
     int x;
@@ -31,6 +34,40 @@ struct Action{
         std::cout << destination.x << " " << destination.y << " " << destination.time << "\n";
     }
 };
+
+struct EdgeIntervalIndex{
+    std::size_t source_loc_ind;
+    std::size_t source_ind;
+    std::size_t destination_loc_ind;
+    std::size_t destination_ind;
+
+    inline void debug() const{
+        std::cout << source_loc_ind << " " << source_ind << " " << destination_loc_ind <<  " " << destination_ind << "\n";
+    }
+};
+
+struct EdgeIntervalIndexHash{
+    inline std::size_t operator()(const EdgeIntervalIndex& eii) const{
+        std::size_t seed = 0;
+        boost::hash_combine(seed, eii.source_loc_ind);
+        boost::hash_combine(seed, eii.source_ind);
+        boost::hash_combine(seed, eii.destination_loc_ind);
+        boost::hash_combine(seed, eii.destination_ind);
+        return seed;
+    }
+};
+
+struct EdgeIntervalIndexEquals{
+    inline bool operator()(const EdgeIntervalIndex& lhs, const EdgeIntervalIndex& rhs) const{
+        return  lhs.source_loc_ind == rhs.source_loc_ind &&
+                lhs.destination_loc_ind == rhs.destination_loc_ind &&
+                lhs.source_ind == rhs.source_ind &&
+                lhs.destination_ind == rhs.destination_ind;
+    }
+};
+
+using EdgeIntervals = std::unordered_map<EdgeIntervalIndex, boost::container::flat_set<safe_interval>, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
+using EdgeClosed = std::unordered_map<EdgeIntervalIndex, std::vector<std::size_t>, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
 
 struct Subfunctional{
     double alpha;

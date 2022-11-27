@@ -21,7 +21,6 @@
 
 
 
-typedef std::pair<double, double> safe_interval;
 
 inline void debug_interval(const safe_interval& i){
     std::cout << "<" << i.first << " " << i.second << ">" << "\n"; 
@@ -35,17 +34,13 @@ inline bool in_safe_interval(const boost::container::flat_set<safe_interval>& si
     return time.first >= lb->first && time.second <= lb->second; 
 } 
 
-inline std::size_t edge_index(int x, int y, int dx, int dy, const Map& map){
-    return map.getIndex(x, y)*9 + (dx+1) + 3*(dy+1);
-}
-
 class SafeIntervals{
     private:
         double valid_until;
         double forget_until;
         std::vector<boost::container::flat_set<safe_interval>> _safe_intervals;
-        std::vector<std::vector<std::unordered_map<std::size_t,std::unordered_map<std::size_t, std::vector<std::size_t>>>>> _visited;
-        std::vector<std::vector<std::unordered_map<std::size_t,std::unordered_map<std::size_t, boost::container::flat_set<safe_interval>>>>> _edge_safe_intervals;
+        EdgeClosed _visited;
+        EdgeIntervals _edge_safe_intervals;
         std::vector<boost::container::flat_set<safe_interval>> unsafe_intervals;
         const std::vector<std::shared_ptr<DynamicObstacle>>& _obs;
         const Map& _map;
@@ -181,15 +176,9 @@ class SafeIntervals{
         }
 
         inline void zero_visits(){
-            for (std::size_t i = 0; i < _visited.size();i++){
-                for (std::size_t j=0; j< _visited[i].size();j++){
-                    for (const auto& k: _visited[i][j]){
-                        for(const auto& w: _visited[i][j][k.first]){
-                            for (std::size_t x = 0; x < _visited[i][j][k.first][w.first].size(); x++){
-                                _visited[i][j][k.first][w.first][x] = std::numeric_limits<std::size_t>::max();
-                            }
-                        }
-                    }
+            for (auto elem: _visited){
+                for (std::size_t j = 0; j < elem.second.size(); j++){
+                    _visited.at(elem.first).at(j) = std::numeric_limits<std::size_t>::max();
                 }
             }
         }
@@ -226,10 +215,11 @@ class SafeIntervals{
             return interval;
         }
 
-        inline bool valid(const Action& action, double agent_speed, bool debug = false)const{
+        inline bool valid(const Action& action, double agent_speed, bool debug = false) const{
+            EdgeIntervalIndex eii;
             double action_duration = eightWayDistance(action.source, action.destination, agent_speed);
-            std::size_t source_loc_ind = _map.getIndex(action.source);
-            auto source_interval = get_interval(action.source.time, 4*source_loc_ind);
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            auto source_interval = get_interval(action.source.time, eii.source_loc_ind);
             if (debug){
                 std::cout << "action duration: " << action_duration << "\n";
             }
@@ -240,17 +230,17 @@ class SafeIntervals{
                 if(debug){
                     std::cout << "invalid wait:" << action.source.time << " " << wait_until << "\n";
                     debug_interval(*source_interval);
-                    get_interval(action.source.time, 4*source_loc_ind, true);
+                    get_interval(action.source.time, eii.source_loc_ind, true);
                 }
                 return false;
             }
             //check move if non zero duration
             if(action_duration > 0.0){
-                std::size_t source_ind = _safe_intervals[4*source_loc_ind].index_of(source_interval);
-                std::size_t destination_loc_ind = _map.getIndex(action.destination);
-                auto destination_interval = get_interval(action.destination.time, 4*destination_loc_ind, debug);
-                std::size_t destination_ind = _safe_intervals[4*destination_loc_ind].index_of(destination_interval);
-                const auto& inter = _edge_safe_intervals[source_loc_ind][source_ind].at(destination_loc_ind).at(destination_ind);
+                eii.source_ind = _safe_intervals.at(eii.source_loc_ind).index_of(source_interval);
+                eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+                auto destination_interval = get_interval(action.destination.time, eii.destination_loc_ind, debug);
+                eii.destination_ind = _safe_intervals.at(eii.destination_loc_ind).index_of(destination_interval);
+                const auto& inter = _edge_safe_intervals.at(eii);
                 if(debug){
                     debug_interval(act_int);
                 }
@@ -267,7 +257,7 @@ class SafeIntervals{
                 bool retval =  (wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon();
                 if(debug){
                     std::cout << "invalid edge traversal:" << wait_until << " "<< wait_until - ub->first << " " << ub->second - wait_until << "\n";
-                    std::cout << source_loc_ind << " " << source_ind << " " << destination_loc_ind <<  " " << destination_ind << "\n";
+                    eii.debug();
                     debug_interval(*ub);
                     for(auto interval: inter){
                         debug_interval(interval);
@@ -320,15 +310,11 @@ class SafeIntervals{
             join_intervals(unsafe_intervals);
             generate_from_unsafe(unsafe_intervals);
             always_safe_until(start_state, startendt, _map);
-            _edge_safe_intervals.resize(_map.width*_map.height);
-            _visited.resize(_map.width*_map.height);
+            EdgeIntervalIndex eii;
             Action act(State(0,0,0),State(0,0,0));
             for (act.source.x = 0; act.source.x < (int)_map.width; act.source.x++){
                 for (act.source.y = 0; act.source.y < (int)_map.height; act.source.y++){
-                    std::size_t source_loc_si_index = _map.get_safe_interval_ind(act.source);
-                    std::size_t source_loc_index = _map.getIndex(act.source);
-                    _visited[source_loc_index].resize(_safe_intervals[source_loc_si_index].size());
-                    _edge_safe_intervals[source_loc_index].resize(_safe_intervals[source_loc_si_index].size());
+                    eii.source_loc_ind = _map.get_safe_interval_ind(act.source);
                     for (int dx = -1; dx <= 1; dx++){
                         act.destination.x = act.source.x + dx;
                         for (int dy = -1; dy <= 1; dy++){
@@ -344,39 +330,36 @@ class SafeIntervals{
                                     continue;
                                 }    
                             }
-                            std::size_t loc_ind = _map.getIndex(act.destination);
                             _map.get_safe_interval_ind(act, ind);
-                            const auto& source_intervals = _safe_intervals[ind[0]];
-                            _edge_safe_intervals[loc_ind].resize(source_intervals.size());
-                            _visited[loc_ind].resize(source_intervals.size());
+                            assert(eii.source_loc_ind == ind[0]);
+                            eii.destination_loc_ind = ind[1];
+                            const auto& source_intervals = _safe_intervals.at(ind[0]);
                             if (ind[1] == std::numeric_limits<std::size_t>::max()){
                                 continue;
                             }
-                            else{
-                                std::size_t destination_loc_si_index = ind[1];
-                                std::size_t destination_loc_index = _map.getIndex(act.destination);
-                                
+                            else{       
+                                double action_duration = eightWayDistance(act.source, act.destination, agent_speed);                         
                                 for(auto source_interval = source_intervals.begin(); source_interval != source_intervals.end(); source_interval++){
-                                    double action_duration = eightWayDistance(act.source, act.destination, agent_speed);
-                                    std::size_t source_interval_index = source_intervals.index_of(source_interval);
-                                    const auto& destination_intervals = _safe_intervals[destination_loc_si_index];
-                                    //_visited[source_loc_index][source_interval_index].emplace(destination_loc_index,std::unordered_map<std::size_t, std::vector<std::size_t>>());
-                                    //_edge_safe_intervals[source_loc_index][source_interval_index].emplace(destination_loc_index,std::unordered_map<std::size_t, boost::container::flat_set<safe_interval>>());
+                                    eii.source_ind = source_intervals.index_of(source_interval);
+                                    const auto& destination_intervals = _safe_intervals.at(eii.destination_loc_ind);
                                     for(auto destination_interval = destination_intervals.begin(); destination_interval != destination_intervals.end(); destination_interval++){
-                                        std::size_t destination_interval_index = destination_intervals.index_of(destination_interval);
-                                        const auto& edge_intervals = _safe_intervals[ind[2]];
+                                        eii.destination_ind = destination_intervals.index_of(destination_interval);
+                                        const auto& edge_intervals = _safe_intervals.at(ind[2]);
                                         for (auto edge_interval = edge_intervals.begin(); edge_interval != edge_intervals.end(); edge_interval++ ){
                                             double alpha = std::max(source_interval->first, std::max(edge_interval->first, destination_interval->first - action_duration));
                                             double beta = std::min(source_interval->second, std::min(edge_interval->second, destination_interval->second - action_duration));
                                             if(alpha <= beta){
-                                                _edge_safe_intervals[source_loc_index][source_interval_index][destination_loc_index][destination_interval_index].emplace(alpha, beta);
-                                                _visited[source_loc_index][source_interval_index][destination_loc_index][destination_interval_index].emplace_back(std::numeric_limits<std::size_t>::max());
+                                                if (!_edge_safe_intervals.contains(eii)){
+                                                   _edge_safe_intervals.emplace(std::make_pair(eii, boost::container::flat_set<safe_interval>()));
+                                                   _visited.emplace(std::make_pair(eii, std::vector<std::size_t>()));
+                                                }
+                                                _edge_safe_intervals.at(eii).emplace(alpha, beta);
+                                                _visited.at(eii).emplace_back(std::numeric_limits<std::size_t>::max());
                                             }
                                         }
                                     }
                                 }
-                            }
-                            
+                            }  
                         }
                     }
                 }
@@ -386,7 +369,7 @@ class SafeIntervals{
             //zero_visits();
             valid_until = until;
         }
-
+/*
         inline bool isSafe(const Action& action, const Map& map, double agent_speed, bool debug = false) const{
             safe_interval time = safe_interval();
             std::array<std::size_t, 3> ind;
@@ -409,11 +392,9 @@ class SafeIntervals{
                         return false;
                     }    
                 }
-                /*
-                while (valid_until < action.destination.time){
-                    generate(2*valid_until);
-                }
-                */
+                //while (valid_until < action.destination.time){
+                //    generate(2*valid_until);
+                //}
                 
                 map.get_safe_interval_ind(action, ind);
                 if (debug){
@@ -469,7 +450,7 @@ class SafeIntervals{
             }
             return false;
         }
-
+*/
         inline std::pair<std::vector<int>, std::vector<double>> flatten(const Map& map) const{
             std::vector<int> retval_int;
             std::vector<double> retval_double;
@@ -493,38 +474,54 @@ class SafeIntervals{
             return _safe_intervals[loc_ind].nth(interval_i);
         }
 
-        inline std::size_t visited(const Action & action, std::size_t source_interval_i, std::size_t destination_interval_i, std::size_t edge_i){
-            std::size_t source_loc_ind = _map.getIndex(action.source);
-            std::size_t destination_loc_ind = _map.getIndex(action.destination);
-            return _visited[source_loc_ind][source_interval_i][destination_loc_ind][destination_interval_i][edge_i];
+        inline std::size_t visited(const Action & action, std::size_t source_interval_i, std::size_t destination_interval_i, std::size_t edge_i) const{
+            EdgeIntervalIndex eii;
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            eii.source_ind = source_interval_i;
+            eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+            eii.destination_ind = destination_interval_i;
+            return _visited.at(eii).at(edge_i);
         }
 
         inline void markvisited(const Action & action, std::size_t source_interval_i, std::size_t destination_interval_i, std::size_t edge_i, std::size_t node_ind){
-            std::size_t source_loc_ind = _map.getIndex(action.source);
-            std::size_t destination_loc_ind = _map.getIndex(action.destination);
-            _visited[source_loc_ind][source_interval_i][destination_loc_ind][destination_interval_i][edge_i] = node_ind;
+            EdgeIntervalIndex eii;
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            eii.source_ind = source_interval_i;
+            eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+            eii.destination_ind = destination_interval_i;
+            _visited.at(eii).at(edge_i) = node_ind;
         }
 
         inline safe_interval get_edge(const Action & action, std::size_t source_interval_i, std::size_t destination_interval_i, std::size_t edge_i) const{
-            std::size_t source_loc_ind = _map.getIndex(action.source);
-            std::size_t destination_loc_ind = _map.getIndex(action.destination);
-            return *_edge_safe_intervals[source_loc_ind][source_interval_i].at(destination_loc_ind).at(destination_interval_i).nth(edge_i);
+            EdgeIntervalIndex eii;
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            eii.source_ind = source_interval_i;
+            eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+            eii.destination_ind = destination_interval_i;
+            return *_edge_safe_intervals.at(eii).nth(edge_i);
         }
 
         inline void waits(const Action& action, std::size_t source_interval_ind, std::vector<std::size_t>& destination_interval_inds, std::vector<std::size_t>& edge_inds, double action_duration, bool debug = false) const{
             destination_interval_inds.clear();
             edge_inds.clear();
-            std::size_t source_loc_ind = _map.getIndex(action.source);
-            std::size_t destination_loc_ind = _map.getIndex(action.destination);
+            EdgeIntervalIndex eii;
+            eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
+            eii.source_ind = source_interval_ind;
+            eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
+            
             double wait_until = action.destination.time - action_duration;
             std::pair<double, double> time(wait_until, std::numeric_limits<double>::infinity());
             if (debug){
                 std::cout << "debug waits\n";
             }
-
-            if (_edge_safe_intervals[source_loc_ind][source_interval_ind].count(destination_loc_ind) > 0){
-                for (const auto& destination_interval: _edge_safe_intervals[source_loc_ind][source_interval_ind].at(destination_loc_ind)){
-                    const auto & si = destination_interval.second;
+            std::size_t total_destination_intervals = _safe_intervals.at(eii.destination_loc_ind).size();
+            auto first_destination = _safe_intervals.at(eii.destination_loc_ind).upper_bound(time);
+            if (_safe_intervals.at(eii.destination_loc_ind).begin() != first_destination){
+                --first_destination;
+            }
+            for (eii.destination_ind = _safe_intervals.at(eii.destination_loc_ind).index_of(first_destination); eii.destination_ind < total_destination_intervals; eii.destination_ind++){
+                if (_edge_safe_intervals.contains(eii)){
+                    const auto & si = _edge_safe_intervals.at(eii);
                     auto lb = si.upper_bound(time);
                     if (lb != si.begin()){
                         --lb;
@@ -534,11 +531,11 @@ class SafeIntervals{
                         if (action.source.time >= lb->first && action.source.time <= lb->second){
                             if (debug){
                                 std::cout << action.source.time << "\n";
-                                std::cout << source_loc_ind << " " <<  source_interval_ind<< " " << destination_loc_ind<< " " << destination_interval.first << "\n";
+                                eii.debug();
                                 debug_interval(*lb);
                                 std::cout << "\n";
                             }
-                            destination_interval_inds.emplace_back(destination_interval.first);
+                            destination_interval_inds.emplace_back(eii.destination_ind);
                             edge_inds.emplace_back(si.index_of(lb));
                         }
                         ++lb;
