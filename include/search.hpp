@@ -142,6 +142,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
     NodeOpen<sippNode, NodeGreater<sippNode>> open;
+    NodeClosed<sippNode> closed;
     std::vector<NodeOpen<sippNode, NodeGreater<sippNode>>::handle_type> handles;
     std::vector<bool> node_on_open;
     sippNode::nodes.clear();

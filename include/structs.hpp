@@ -66,8 +66,25 @@ struct EdgeIntervalIndexEquals{
     }
 };
 
+
+struct EdgeIntervalIndexClosedHash{
+    inline std::size_t operator()(const EdgeIntervalIndex& eii) const{
+        std::size_t seed = 0;
+        boost::hash_combine(seed, eii.destination_loc_ind);
+        boost::hash_combine(seed, eii.destination_ind);
+        return seed;
+    }
+};
+
+struct EdgeIntervalIndexClosedEquals{
+    inline bool operator()(const EdgeIntervalIndex& lhs, const EdgeIntervalIndex& rhs) const{
+        return  lhs.destination_loc_ind == rhs.destination_loc_ind &&
+                lhs.destination_ind == rhs.destination_ind;
+    }
+};
+
 using EdgeIntervals = std::unordered_map<EdgeIntervalIndex, boost::container::flat_set<safe_interval>, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
-using EdgeClosed = std::unordered_map<EdgeIntervalIndex, std::vector<std::size_t>, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
+using EdgeClosed = std::unordered_map<EdgeIntervalIndex, std::vector<std::size_t>, EdgeIntervalIndexClosedHash, EdgeIntervalIndexClosedEquals>;
 
 struct Subfunctional{
     double alpha;

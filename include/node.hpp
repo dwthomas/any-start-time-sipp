@@ -347,3 +347,6 @@ struct partialPdapNodeGreater{
 
 template <typename NodeT, typename SortNodeT>
 using NodeOpen = boost::heap::d_ary_heap<std::size_t, boost::heap::compare<SortNodeT>, boost::heap::arity<2>,boost::heap::mutable_<true>>;
+
+template <typename NodeT>
+using NodeClosed = std::unordered_map<NodeT, std::size_t, NodeHash<NodeT>, NodeEquals<NodeT>>;
