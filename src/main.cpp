@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
             rts = metadata.runtime.elapsed().user*0.000000001;// conver to second from nanosecond
         }
         std::cout << metadata.runtime.format() << "\n";
-        std::cout << "SIPP\nExpansions:" << metadata.expansions << "\n"; 
+        std::cout << "SIPP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
         double until = 0;
         double guess = 0.001;
         //assert(check_path(path, start_time, safe_intervals, agent_speed));
@@ -89,12 +89,12 @@ int main(int argc, char *argv[]){
     else if (metadata.args()["search"].as<std::string>() == "pdap"){
         pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         std::cout << metadata.runtime.format() << "\n";
-        std::cout << "PDAP\nExpansions:" << metadata.expansions << "\n";
+        std::cout << "PDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
     }
     else if (metadata.args()["search"].as<std::string>() == "partialpdap"){
         auto functional = partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         std::cout << metadata.runtime.format() << "\n";
-        std::cout << "partialPDAP\nExpansions:" << metadata.expansions << "\n";
+        std::cout << "partialPDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
         functional.debug();
     }
     else{

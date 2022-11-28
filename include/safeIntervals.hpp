@@ -242,6 +242,9 @@ class SafeIntervals{
                 eii.destination_loc_ind = _map.get_safe_interval_ind(action.destination);
                 auto destination_interval = get_interval(action.destination.time, eii.destination_loc_ind, debug);
                 eii.destination_ind = _safe_intervals.at(eii.destination_loc_ind).index_of(destination_interval);
+                if (!_edge_safe_intervals.contains(eii)){
+                    return false;
+                }
                 const auto& inter = _edge_safe_intervals.at(eii);
                 /*if(debug){
                     debug_interval(act_int);
@@ -259,9 +262,11 @@ class SafeIntervals{
                 bool retval =  (wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon();
                 if(ub != inter.end()){
                     ++ub;
-                    retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
+                    if (ub != inter.end()){
+                        retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
+                    }
                 }
-                retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
+                //retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
                 /*if(debug){
                     std::cout << "invalid edge traversal:" << wait_until << " "<< wait_until - ub->first << " " << ub->second - wait_until << "\n";
                     eii.debug();

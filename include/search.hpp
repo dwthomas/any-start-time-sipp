@@ -131,6 +131,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
 
 
 inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata, bool resume = false){
+    long prior_open_size;
     ++(metadata.plan_attempts);
     if (!resume){
         metadata.runtime.start();
@@ -157,7 +158,9 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
             metadata.runtime.stop();
             return sipp_backtrack_path(current_node);
         }
+        prior_open_size = open.size();
         sippGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, handles, node_on_open, destination_ind, edge_ind);
+        metadata.generated += std::max<long>((long)open.size() - prior_open_size, 0);
     }
     metadata.runtime.stop();
     return {};
@@ -230,6 +233,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 
 inline void pdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
+    long prior_open_size;
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
     NodeOpen<pdapNode, NodeGreater<pdapNode>> open;
@@ -253,7 +257,9 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
             pdap_backtrack_path<pdapNode>(current_node);
             return;
         }
+        prior_open_size = open.size();
         pdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, handles, node_on_open, destination_ind, edge_ind);
+        metadata.generated += std::max<long>((long)open.size() - prior_open_size, 0);
     }
 }
 
@@ -331,6 +337,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
 
 inline Functional partialPdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
+    long prior_open_size;
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
     NodeOpen<partialPdapNode,partialPdapNodeGreater> open;
@@ -359,7 +366,9 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
                 break;
             }
         }
+        prior_open_size = open.size();
         partialPdapGenerateSuccessors(current_node, goal, agent_speed, safe_intervals, map, open, handles, node_on_open, destination_ind, edge_ind);
+        metadata.generated += std::max<long>((long)open.size() - prior_open_size, 0);
     }
     if(open.empty()){
         metadata.runtime.stop();

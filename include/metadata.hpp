@@ -49,8 +49,9 @@ class Metadata{
     public:
         boost::timer::cpu_timer runtime;
         long expansions;
+        long generated;
         long plan_attempts;
-        Metadata(int argc, char *argv[]):expansions(0),plan_attempts(0){
+        Metadata(int argc, char *argv[]):expansions(0),generated(0),plan_attempts(0){
             vm = parse_arguments(argc, argv);
         }
 
