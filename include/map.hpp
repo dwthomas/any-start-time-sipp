@@ -82,6 +82,8 @@ struct Map{
     }
 
     constexpr void checkBounds(int x, int y) const{
+        (void)x;
+        (void)y;
         assert (x >= 0 && (unsigned int)x < width);
         assert (y >= 0 && (unsigned int)y < height);
     }

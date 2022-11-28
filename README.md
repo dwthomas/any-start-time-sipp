@@ -13,6 +13,7 @@ pip install meson
 meson setup --buildtype debug  build_debug 
 meson setup --buildtype debugoptimized  build_debugoptimized 
 meson setup --buildtype release  build_release
+meson configure build_release/ -Db_ndebug=true
 ./compile.sh
 
 Note that on 20.04 gcc and meson are old versions, on many other OS's the package manager should provide new enough versions by default!

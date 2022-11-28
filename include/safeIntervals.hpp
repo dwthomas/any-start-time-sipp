@@ -190,19 +190,21 @@ class SafeIntervals{
         }
         inline auto get_interval(double time, std::size_t index, bool debug = false)const{
             auto interval = _safe_intervals[index].upper_bound(safe_interval(time, std::numeric_limits<double>::infinity()));
+            /*
             if(debug){
                 std::cout << "get interval " << time << " " << index << "\n";
             }
             if(debug){
                 debug_interval(*interval);
             }
-            if (interval != _safe_intervals[index].begin()){
+            */
+            if (interval == _safe_intervals[index].end() || (interval != _safe_intervals[index].begin() && (interval->first - time) > epsilon())){
                 interval = std::prev(interval);
-                if(debug){
+                /*if(debug){
                     debug_interval(*interval);
-                }
+                }*/
             }
-
+            /*
             if(debug){
                 std::cout << "destination safe intervals\n";
                 for(auto inter:_safe_intervals[index]){
@@ -210,7 +212,7 @@ class SafeIntervals{
                 }
                 std::cout << "\n";
             }
-            
+            */
             //assert(interval->first <= time && time <= interval->second);
             return interval;
         }
@@ -220,18 +222,18 @@ class SafeIntervals{
             double action_duration = eightWayDistance(action.source, action.destination, agent_speed);
             eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
             auto source_interval = get_interval(action.source.time, eii.source_loc_ind);
-            if (debug){
-                std::cout << "action duration: " << action_duration << "\n";
-            }
+            //if (debug){
+            //    std::cout << "action duration: " << action_duration << "\n";
+            //}
             //check wait
             double wait_until = action.destination.time - action_duration;
             safe_interval act_int(wait_until, std::numeric_limits<double>::infinity());
             if (source_interval->first - action.source.time > epsilon()  || wait_until - source_interval->second > epsilon()){
-                if(debug){
+                /*if(debug){
                     std::cout << "invalid wait:" << action.source.time << " " << wait_until << "\n";
                     debug_interval(*source_interval);
                     get_interval(action.source.time, eii.source_loc_ind, true);
-                }
+                }*/
                 return false;
             }
             //check move if non zero duration
@@ -241,28 +243,33 @@ class SafeIntervals{
                 auto destination_interval = get_interval(action.destination.time, eii.destination_loc_ind, debug);
                 eii.destination_ind = _safe_intervals.at(eii.destination_loc_ind).index_of(destination_interval);
                 const auto& inter = _edge_safe_intervals.at(eii);
-                if(debug){
+                /*if(debug){
                     debug_interval(act_int);
-                }
+                }*/
                 auto ub  = inter.upper_bound(act_int);
-                if(debug){
+                /*if(debug){
                     debug_interval(*ub);
-                }
+                }*/
                 if (ub != inter.begin()){
                     --ub;
-                    if(debug){
+                    /*if(debug){
                         debug_interval(*ub);
-                    }
+                    }*/
                 }
                 bool retval =  (wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon();
-                if(debug){
+                if(ub != inter.end()){
+                    ++ub;
+                    retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
+                }
+                retval = retval || ((wait_until - ub->first) >= -epsilon()  && (ub->second - wait_until) >= -epsilon());
+                /*if(debug){
                     std::cout << "invalid edge traversal:" << wait_until << " "<< wait_until - ub->first << " " << ub->second - wait_until << "\n";
                     eii.debug();
                     debug_interval(*ub);
                     for(auto interval: inter){
                         debug_interval(interval);
                     }
-                }
+                }*/
                 return retval;
             }
             return true;
@@ -511,9 +518,11 @@ class SafeIntervals{
             
             double wait_until = action.destination.time - action_duration;
             std::pair<double, double> time(wait_until, std::numeric_limits<double>::infinity());
-            if (debug){
+            /*if (debug){
                 std::cout << "debug waits\n";
             }
+            */
+            const auto& source_interval = _safe_intervals.at(eii.source_loc_ind).nth(eii.source_ind);
             std::size_t total_destination_intervals = _safe_intervals.at(eii.destination_loc_ind).size();
             auto first_destination = _safe_intervals.at(eii.destination_loc_ind).upper_bound(time);
             if (_safe_intervals.at(eii.destination_loc_ind).begin() != first_destination){
@@ -528,13 +537,13 @@ class SafeIntervals{
                     }
                     
                     while(lb != si.end()){
-                        if (action.source.time >= lb->first && action.source.time <= lb->second){
-                            if (debug){
+                        if (lb->first <= source_interval->second && action.source.time <= lb->second){
+                            /*if (debug){
                                 std::cout << action.source.time << "\n";
                                 eii.debug();
                                 debug_interval(*lb);
                                 std::cout << "\n";
-                            }
+                            }*/
                             destination_interval_inds.emplace_back(eii.destination_ind);
                             edge_inds.emplace_back(si.index_of(lb));
                         }
@@ -555,9 +564,10 @@ class SafeIntervals{
             
             double wait_until = action.destination.time - action_duration;
             std::pair<double, double> time(wait_until, std::numeric_limits<double>::infinity());
-            if (debug){
+            /*if (debug){
                 std::cout << "debug waits\n";
-            }
+            }*/
+            const auto& source_interval = _safe_intervals.at(eii.source_loc_ind).nth(eii.source_ind);
             std::size_t total_destination_intervals = _safe_intervals.at(eii.destination_loc_ind).size();
             auto first_destination = _safe_intervals.at(eii.destination_loc_ind).upper_bound(time);
             if (_safe_intervals.at(eii.destination_loc_ind).begin() != first_destination){
@@ -568,13 +578,13 @@ class SafeIntervals{
                     const auto & si = _edge_safe_intervals.at(eii);
                     if (si.size() > partial_i){
                         auto lb = si.nth(partial_i);
-                        if (action.source.time >= lb->first && action.source.time <= lb->second){
-                            if (debug){
+                        if (lb->first <= source_interval->second  && action.source.time <= lb->second){
+                            /*if (debug){
                                 std::cout << action.source.time << "\n";
                                 eii.debug();
                                 debug_interval(*lb);
                                 std::cout << "\n";
-                            }
+                            }*/
                             destination_interval_inds.emplace_back(eii.destination_ind);
                             edge_inds.emplace_back(si.index_of(lb));
                         }

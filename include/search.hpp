@@ -193,6 +193,9 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 const safe_interval& edge_interval = safe_intervals.get_edge(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 double alpha = std::max(current_node.alpha, edge_interval.first - delta_prior);
                 act.destination.time =  delta_prior + dt + alpha;
+                if (!safe_intervals.valid(act, agent_speed)){
+                    safe_intervals.valid(act, agent_speed, true);
+                }
                 assert(safe_intervals.valid(act, agent_speed));
                 double beta = std::min(current_node.beta, edge_interval.second - delta_prior);
                 double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
@@ -259,7 +262,7 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
 
 
 inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
-                                           NodeOpen<partialPdapNode, NodeGreater<partialPdapNode>>& open, std::vector<NodeOpen<partialPdapNode, NodeGreater<partialPdapNode>>::handle_type>& handles, std::vector<bool>& node_on_open,
+                                           NodeOpen<partialPdapNode, partialPdapNodeGreater>& open, std::vector<NodeOpen<partialPdapNode, partialPdapNodeGreater>::handle_type>& handles, std::vector<bool>& node_on_open,
                                             std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
     double min_f = std::numeric_limits<double>::infinity();
@@ -330,8 +333,8 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
     metadata.runtime.start();
     std::vector<std::size_t> destination_ind;
     std::vector<std::size_t> edge_ind;
-    NodeOpen<partialPdapNode, NodeGreater<partialPdapNode>> open;
-    std::vector<NodeOpen<partialPdapNode, NodeGreater<partialPdapNode>>::handle_type> handles;
+    NodeOpen<partialPdapNode,partialPdapNodeGreater> open;
+    std::vector<NodeOpen<partialPdapNode, partialPdapNodeGreater>::handle_type> handles;
     std::vector<bool> node_on_open;
     pdapNode::nodes.clear();
     Functional functional;

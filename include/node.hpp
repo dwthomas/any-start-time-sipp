@@ -46,6 +46,7 @@ struct sippNode{
     }
     
      static inline void remove(std::size_t ind){
+        (void)ind;
         assert(ind == (nodes.size()-1));
         nodes.pop_back();
     }
@@ -104,6 +105,7 @@ struct pdapNode{
     }
     
      static inline void remove(std::size_t ind){
+        (void)ind;
         assert(ind == (nodes.size()-1));
         nodes.pop_back();
     }
@@ -118,7 +120,7 @@ struct pdapNode{
 
     inline void debug() const{
         s.debug();
-        std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << "\n";
+        std::cout << "g: " << s.time << " ii:" << intervalInd<< " f: " << f << "alpha: " << alpha << " " << "beta: " << beta << "\n";
     }
 
     inline void report() const{
@@ -170,6 +172,7 @@ struct partialPdapNode{
     }
     
      static inline void remove(std::size_t ind){
+        (void)ind;
         assert(ind == (nodes.size()-1));
         nodes.pop_back();
     }
