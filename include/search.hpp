@@ -101,7 +101,11 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
             act.destination.time = current_node.s.time + dt;
             safe_intervals.waits(act, current_node.intervalInd, destination_ind, edge_ind, dt);
             for (std::size_t i = 0; i < edge_ind.size(); i++){
-                act.destination.time = std::max(current_node.s.time + dt, safe_intervals.get_edge(act, current_node.intervalInd, destination_ind[i], edge_ind[i]).first + dt); 
+                const auto & edge_interval = safe_intervals.get_edge(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
+                act.destination.time = std::max(current_node.s.time + dt, edge_interval.first + dt); 
+                if (edge_interval.second < act.destination.time){
+                    continue;
+                }
                 assert(safe_intervals.valid(act, agent_speed));
                 double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
@@ -197,6 +201,9 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 const safe_interval& edge_interval = safe_intervals.get_edge(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 double alpha = std::max(current_node.alpha, edge_interval.first - delta_prior);
                 act.destination.time =  delta_prior + dt + alpha;
+                if (edge_interval.second < act.destination.time){
+                    continue;
+                }
                 if (!safe_intervals.valid(act, agent_speed)){
                     safe_intervals.valid(act, agent_speed, true);
                 }
@@ -306,6 +313,9 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
                 act.destination.time =  delta_prior + dt + alpha;
                 assert(safe_intervals.valid(act, agent_speed));
                 double beta = std::min(current_node.beta, edge_interval.second - delta_prior);
+                if (edge_interval.second < act.destination.time){
+                    continue;
+                }
                 double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 std::size_t intervalInd = destination_ind[i];
@@ -359,6 +369,9 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
         open.pop();
         node_on_open.at(current_node) = false;
         ++(metadata.expansions);
+        if(!functional.check_back(current_node)){
+            continue;
+        }
         if (isGoal(cn, goal)){
             double alph = functional.emplace_back(cn.alpha, cn.beta, cn.delta(), current_node);
             if (alph >= max_query){
