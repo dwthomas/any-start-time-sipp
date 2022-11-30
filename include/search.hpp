@@ -372,8 +372,9 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
             continue;
         }
         if (isGoal(cn, goal)){
-            double alph = functional.emplace_back(cn.alpha, cn.beta, cn.delta, current_node);
-            if (alph >= max_query){
+            functional.emplace_back(cn.alpha, cn.beta, cn.delta, current_node);
+            functional = functional.finalize();
+            if (functional.finite_until() > max_query){
                 metadata.runtime.stop();
                 std::cout << "full functional found\n";
                 break;
