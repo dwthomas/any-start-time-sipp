@@ -392,7 +392,7 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
             std::cout << "partial functional found\n";
         }
     }
-    return functional;
+    return functional.finalize();
 }
 /*
 inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
