@@ -99,7 +99,7 @@ struct Subfunctional{
     }
 
     inline double arrival_time(double t) const{
-        if (t <= alpha){
+        if (t <= std::min(alpha, beta)){
             return alpha + delta;
         }
         if (t <= beta){

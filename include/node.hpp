@@ -67,11 +67,12 @@ struct pdapNode{
     State s; // s.time = Delta + alpha
     double alpha;
     double beta;
+    double delta;
     std::size_t intervalInd;
     double f;
     std::size_t parent;
 
-    pdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _f, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalInd(_intervalInd),f(_f),parent(_parent){};
+    pdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _delta,double _f, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),delta(_delta),intervalInd(_intervalInd),f(_f),parent(_parent){};
 
     static std::vector<pdapNode> nodes;
     
@@ -89,13 +90,9 @@ struct pdapNode{
                intervalInd == rhs.intervalInd;
     }
 
-    inline double delta()const{
-        return s.time - alpha;
-    }
-
-    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double f, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double delta, double f, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, f, parent);
+        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, delta, f, parent);
         return ind;
     }
 
@@ -110,12 +107,13 @@ struct pdapNode{
         nodes.pop_back();
     }
 
-    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f,std::size_t cnode){
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double delta,double f,std::size_t cnode){
         nodes[node_ind].f = f;
         nodes[node_ind].s.time = time;
         nodes[node_ind].parent = cnode;
         nodes[node_ind].alpha = alpha;
         nodes[node_ind].beta = beta;
+        nodes[node_ind].delta = delta;
     }
 
     inline void debug() const{
@@ -124,7 +122,7 @@ struct pdapNode{
     }
 
     inline void report() const{
-        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta() << "\n";
+        std::cout << s.x << " " << s.y << " " << s.time <<" " << alpha << " " << beta << " " << delta << "\n";
     }
 };
 
@@ -132,13 +130,14 @@ struct partialPdapNode{
     State s; // s.time = Delta + alpha
     double alpha;
     double beta;
+    double delta;
     std::size_t intervalInd;
     double f;
     double open_f;
     std::size_t expansions;
     std::size_t parent;
 
-    partialPdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _f, std::size_t _expansions, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),intervalInd(_intervalInd),f(_f),open_f(f),expansions(_expansions),parent(_parent){};
+    partialPdapNode(int _x, int _y, std::size_t _intervalInd, double _t, double _alpha, double _beta, double _delta, double _f, double _open_f, std::size_t _expansions, std::size_t _parent):s(_x,_y,_t),alpha(_alpha),beta(_beta),delta(_delta),intervalInd(_intervalInd),f(_f),open_f(_open_f),expansions(_expansions),parent(_parent){};
 
     static std::vector<partialPdapNode> nodes;
     
@@ -156,13 +155,10 @@ struct partialPdapNode{
                intervalInd == rhs.intervalInd;
     }
 
-    inline double delta()const{
-        return s.time - alpha;
-    }
 
-    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double f, std::size_t expansions, std::size_t parent){
+    static inline std::size_t newNode(int x, int y, std::size_t intervalInd, double t, double alpha, double beta, double delta,double f, double open_f, std::size_t expansions, std::size_t parent){
         std::size_t ind = nodes.size();
-        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, f, expansions, parent);
+        nodes.emplace_back(x, y, intervalInd, t, alpha, beta, delta,f, open_f, expansions, parent);
         return ind;
     }
 
@@ -177,13 +173,14 @@ struct partialPdapNode{
         nodes.pop_back();
     }
 
-    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double f, std::size_t expansions,std::size_t cnode){
+    static inline void set_arrival(std::size_t node_ind, double time, double alpha, double beta, double delta,double f, std::size_t expansions,std::size_t cnode){
         nodes[node_ind].f = f;
         nodes[node_ind].s.time = time;
         nodes[node_ind].expansions = expansions;
         nodes[node_ind].parent = cnode;
         nodes[node_ind].alpha = alpha;
         nodes[node_ind].beta = beta;
+        nodes[node_ind].delta = delta;
     }
 
     static inline void set_f(std::size_t ind, double f, std::size_t expansions = std::numeric_limits<std::size_t>::max()){
@@ -201,7 +198,7 @@ struct partialPdapNode{
         std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << " exp: " << expansions << "\n";
     }
     inline void report() const{
-        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta() << "\n";
+        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta << "\n";
     }
 };
 
@@ -243,7 +240,6 @@ struct Functional{
         auto encumbent = encumbent_it->second;
         if (!dominates(encumbent, prospect, *this)){
             double minimization_image = intersection(encumbent, prospect);
-
             assert(minimization_image > encumbent_it->first);
             domain[minimization_image] = prospect;
             return std::max(minimization_image, prospect.alpha);
@@ -272,7 +268,7 @@ inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs, const 
     if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
         return true;
     }
-    else if(functional.arrival_time(rhs.beta) >= functional.arrival_time(rhs.beta) && functional.arrival_time(rhs.alpha) >= functional.arrival_time(rhs.alpha)){
+    else if(rhs.arrival_time(rhs.beta) >= functional.arrival_time(rhs.beta) &&((rhs.alpha >= rhs.beta) || rhs.arrival_time(rhs.alpha) >= functional.arrival_time(rhs.alpha))){
         return true;
     }
     return false;

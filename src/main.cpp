@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     assert(map.isSafe(goal.x, goal.y));
     if(metadata.args()["search"].as<std::string>() == "sipp"){
         auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
-        double rts = 0.0;
+        double rts = start_time;
         while(false && !check_path(path, start_time+rts, safe_intervals, agent_speed) &&
                          start_time + rts <= metadata.args()["startendt"].as<double>()){
             if (path.size() == 0){
@@ -87,6 +87,7 @@ int main(int argc, char *argv[]){
         std::cout << "Valid until: " << until << "\n"; 
     }
     else if (metadata.args()["search"].as<std::string>() == "pdap"){
+        start_state.time = start_time;
         pdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         std::cout << metadata.runtime.format() << "\n";
         std::cout << "PDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
