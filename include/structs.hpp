@@ -83,7 +83,10 @@ struct EdgeIntervalIndexClosedEquals{
     }
 };
 
-using EdgeIntervals = std::unordered_map<EdgeIntervalIndex, boost::container::flat_set<safe_interval>, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
+
+using SafeIntervalContainer = boost::container::flat_map<double, double>;
+// key is END, value is BEGIN, so we can index in to time t with lower_bound()
+using EdgeIntervals = std::unordered_map<EdgeIntervalIndex, SafeIntervalContainer, EdgeIntervalIndexHash, EdgeIntervalIndexEquals>;
 using EdgeClosed = std::unordered_map<EdgeIntervalIndex, std::vector<std::size_t>, EdgeIntervalIndexClosedHash, EdgeIntervalIndexClosedEquals>;
 
 struct Subfunctional{
