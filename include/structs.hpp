@@ -2,22 +2,37 @@
 
 #include <iostream>
 #include <limits>
+#include <unordered_map>
 #include <vector>
 #include <boost/container/flat_map.hpp>
 #include <boost/functional/hash.hpp>
 
 typedef std::pair<double, double> safe_interval;
 
-struct State{
+struct Location{
     int x;
     int y;
-    double time;
-    State(int _x, int _y, double _t):x(_x),y(_y),time(_t){}
-    constexpr bool operator ==(const State & s) const{
-        return x == s.x && y == s.y && time == s.time;
+    Location(int _x, int _y):x(_x),y(_y){}
+    constexpr bool operator ==(const Location& l) const{
+        return x == l.x && y == l.y;
     }
     inline void debug() const{
-        std::cout << x << " " << y << " " << time << "\n";
+        std::cout << x << " " << y;
+    }
+};
+
+using Configuration = Location;
+
+struct State{
+    Configuration x;
+    double time;
+    State(int _x, int _y, double _t):x(_x,_y),time(_t){}
+    constexpr bool operator ==(const State & s) const{
+        return x == s.x && time == s.time;
+    }
+    inline void debug() const{
+        x.debug();
+        std::cout << " " << time << "\n";
     }
 };
 
@@ -30,8 +45,8 @@ struct Action{
     }
 
     inline void debug() const{
-        std::cout << source.x << " " << source.y << " " << source.time << " -> ";
-        std::cout << destination.x << " " << destination.y << " " << destination.time << "\n";
+        std::cout << source.x.x << " " << source.x.y << " " << source.time << " -> ";
+        std::cout << destination.x.x << " " << destination.x.y << " " << destination.time << "\n";
     }
 };
 

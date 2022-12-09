@@ -43,7 +43,7 @@ RandomDynamicObstacle::RandomDynamicObstacle(int x, int y, const Map& _map, doub
 unsigned int RandomDynamicObstacle::get_max(int x, int y, int dx, int dy) const{
     assert(dx != 0 || dy != 0);
     int steps = 0;
-    while(map.inBounds(x + (steps + 1)*dx, y + (steps + 1)*dy) &&  map.isSafe(x + (steps + 1)*dx, y + (steps + 1)*dy)){
+    while(map.inBounds(Configuration(x + (steps + 1)*dx, y + (steps + 1)*dy)) &&  map.isSafe(Configuration(x + (steps + 1)*dx, y + (steps + 1)*dy))){
         ++steps;
     }
     return steps;
@@ -107,11 +107,11 @@ void RandomDynamicObstacle::generate(double until){
         }
         if (dx == 0 && dy == 0){
             auto current_state = specified_path.rbegin();
-            specified_path.emplace_hint(specified_path.end(), current_state->second.time + dt, State(current_state->second.x, current_state->second.y, current_state->second.time + dt));
+            specified_path.emplace_hint(specified_path.end(), current_state->second.time + dt, State(current_state->second.x.x, current_state->second.x.y, current_state->second.time + dt));
             good_until += dt;
             continue;
         }
-        unsigned int max_in_direction = get_max(specified_path.rbegin()->second.x,specified_path.rbegin()->second.y, dx, dy); 
+        unsigned int max_in_direction = get_max(specified_path.rbegin()->second.x.x,specified_path.rbegin()->second.x.y, dx, dy); 
         unsigned int macro_move_steps = boost::random::uniform_smallint<unsigned int>(0, max_in_direction)(generator);
         good_until += macro_move_steps*dt;
         for (unsigned int step=0; step < macro_move_steps; step++){
@@ -119,7 +119,7 @@ void RandomDynamicObstacle::generate(double until){
             auto current_state = specified_path.rbegin();
             specified_path.emplace_hint(specified_path.end(), 
                                         current_state->second.time + dt,
-                                        State(current_state->second.x + dx, current_state->second.y + dy, current_state->second.time + dt));
+                                        State(current_state->second.x.x + dx, current_state->second.x.y + dy, current_state->second.time + dt));
         } 
     }
 }

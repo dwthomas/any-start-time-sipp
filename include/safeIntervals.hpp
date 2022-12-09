@@ -137,7 +137,7 @@ class SafeIntervals{
         void debug(const Map& map) const{
             for (uint j = 0; j < map.height; j++){
                 for (uint i = 0; i < map.width; i++){
-                    std::cout << "<" <<_safe_intervals[4*map.getIndex(i, j)].begin()->first << "," << _safe_intervals[4*map.getIndex(i, j)].begin()->second << ">";
+                    std::cout << "<" <<_safe_intervals[4*map.getIndex(Location(i, j))].begin()->first << "," << _safe_intervals[4*map.getIndex(Location(i, j))].begin()->second << ">";
                 }
                 std::cout << "\n";
             }
@@ -163,7 +163,7 @@ class SafeIntervals{
 
         inline bool valid(const Action& action, double agent_speed) const{
             EdgeIntervalIndex eii;
-            double action_duration = eightWayDistance(action.source, action.destination, agent_speed);
+            double action_duration = eightWayDistance(action.source.x, action.destination.x, agent_speed);
             eii.source_loc_ind = _map.get_safe_interval_ind(action.source);
             auto source_interval = get_interval(action.source.time, eii.source_loc_ind);
             double wait_until = action.destination.time - action_duration;
@@ -224,21 +224,22 @@ class SafeIntervals{
             always_safe_until(start_state, startendt, _map);
             EdgeIntervalIndex eii;
             Action act(State(0,0,0),State(0,0,0));
-            for (act.source.x = 0; act.source.x < (int)_map.width; act.source.x++){
-                for (act.source.y = 0; act.source.y < (int)_map.height; act.source.y++){
+            for (act.source.x.x = 0; act.source.x.x < (int)_map.width; act.source.x.x++){
+                for (act.source.x.y = 0; act.source.x.y < (int)_map.height; act.source.x.y++){
                     eii.source_loc_ind = _map.get_safe_interval_ind(act.source);
                     for (int dx = -1; dx <= 1; dx++){
-                        act.destination.x = act.source.x + dx;
+                        act.destination.x.x = act.source.x.x + dx;
                         for (int dy = -1; dy <= 1; dy++){
-                            act.destination.y = act.source.y + dy;
-                            if (!_map.inBounds(act.source.x, act.source.y) || !_map.isSafe(act.source.x, act.source.y) || !_map.inBounds(act.destination.x, act.destination.y) || !_map.isSafe(act.destination.x, act.destination.y)){
+                            act.destination.x.y = act.source.x.y + dy;
+                            if (!_map.inBounds(act.source.x) || !_map.isSafe(act.source.x) || 
+                                !_map.inBounds(act.destination.x) || !_map.isSafe(act.destination.x)){
                                 continue;
                             }
-                            if (act.source.x != act.destination.x && act.source.y != act.destination.y){
-                                if (_map.inBounds(act.source.x, act.destination.y) && !_map.isSafe(act.source.x, act.destination.y)){
+                            if (act.source.x.x != act.destination.x.x && act.source.x.y != act.destination.x.y){
+                                if (_map.inBounds(Location(act.source.x.x, act.destination.x.y)) && !_map.isSafe(Location(act.source.x.x, act.destination.x.y))){
                                     continue;
                                 }
-                                if (_map.inBounds(act.destination.x, act.source.y) && !_map.isSafe(act.destination.x, act.source.y)){
+                                if (_map.inBounds(Location(act.destination.x.x, act.source.x.y)) && !_map.isSafe(Location(act.destination.x.x, act.source.x.y))){
                                     continue;
                                 }    
                             }
@@ -250,7 +251,7 @@ class SafeIntervals{
                                 continue;
                             }
                             else{       
-                                double action_duration = eightWayDistance(act.source, act.destination, agent_speed);  
+                                double action_duration = eightWayDistance(act.source.x, act.destination.x, agent_speed);  
                                 double dt = 0.5*action_duration;                       
                                 for(auto source_interval = source_intervals.begin(); source_interval != source_intervals.end(); source_interval++){
                                     eii.source_ind = source_intervals.index_of(source_interval);

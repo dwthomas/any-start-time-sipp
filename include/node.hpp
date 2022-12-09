@@ -22,15 +22,14 @@ struct sippNode{
     
     inline std::size_t hash() const{
         std::size_t seed = 0;
-        boost::hash_combine(seed, s.x);
-        boost::hash_combine(seed, s.y);
+        boost::hash_combine(seed, s.x.x);
+        boost::hash_combine(seed, s.x.y);
         boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const sippNode& rhs) const{
         return s.x == rhs.s.x &&
-               s.y == rhs.s.y && 
                intervalInd == rhs.intervalInd;
     }
 
@@ -78,15 +77,14 @@ struct pdapNode{
     
     inline std::size_t hash() const{
         std::size_t seed = 0;
-        boost::hash_combine(seed, s.x);
-        boost::hash_combine(seed, s.y);
+        boost::hash_combine(seed, s.x.x);
+        boost::hash_combine(seed, s.x.y);
         boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const pdapNode& rhs) const{
         return s.x == rhs.s.x &&
-               s.y == rhs.s.y && 
                intervalInd == rhs.intervalInd;
     }
 
@@ -122,7 +120,7 @@ struct pdapNode{
     }
 
     inline void report() const{
-        std::cout << s.x << " " << s.y << " " << s.time <<" " << alpha << " " << beta << " " << delta << "\n";
+        std::cout << s.x.x << " " << s.x.y << " " << s.time <<" " << alpha << " " << beta << " " << delta << "\n";
     }
 };
 
@@ -143,15 +141,14 @@ struct partialPdapNode{
     
     inline std::size_t hash() const{
         std::size_t seed = 0;
-        boost::hash_combine(seed, s.x);
-        boost::hash_combine(seed, s.y);
+        boost::hash_combine(seed, s.x.x);
+        boost::hash_combine(seed, s.x.y);
         boost::hash_combine(seed, intervalInd);
         return seed;
     }
 
     inline bool equals(const pdapNode& rhs) const{
         return s.x == rhs.s.x &&
-               s.y == rhs.s.y && 
                intervalInd == rhs.intervalInd;
     }
 
@@ -198,7 +195,7 @@ struct partialPdapNode{
         std::cout << "g: " << s.time << " is:" << intervalInd<< " f: " << f << " exp: " << expansions << "\n";
     }
     inline void report() const{
-        std::cout << s.x << " " << s.y << " " << alpha << " " << beta << " " << delta << "\n";
+        std::cout << s.x.x << " " << s.x.y << " " << alpha << " " << beta << " " << delta << "\n";
     }
 };
 
@@ -266,7 +263,6 @@ struct Functional{
             encumbent_it = domain.nth(domain.size()-1);
             encumbent = encumbent_it->second;
             double minimization_image = intersection(encumbent, prospect);
-            //assert(minimization_image > encumbent_it->first);
             domain[minimization_image] = prospect;
             return std::max(minimization_image, prospect.alpha);
         }

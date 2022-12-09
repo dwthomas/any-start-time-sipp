@@ -35,8 +35,8 @@ inline void debug_closed(const std::unordered_set<sippNode, NodeHash<sippNode>, 
 }
 
 template<typename NodeT>
-inline bool isGoal(const NodeT& node, const State& goal ){
-    return node.s.x == goal.x && node.s.y == goal.y;
+inline bool isGoal(const NodeT& node, const Configuration& goal ){
+    return node.s.x == goal;
 }
 
 inline std::vector<State> sipp_backtrack_path(std::size_t node){
@@ -75,7 +75,7 @@ inline void pdap_backtrack_path(std::size_t node){
 }
 
 
-inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
+inline void sippGenerateSuccessors(std::size_t cnode, const Configuration& goal, double agent_speed,SafeIntervals& safe_intervals, const Map& map,
                                     NodeOpen<sippNode, NodeGreater<sippNode>>& open, std::vector<NodeOpen<sippNode, NodeGreater<sippNode>>::handle_type>& handles, std::vector<bool>& node_on_open,
                                     std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
@@ -83,7 +83,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
     Action act(current_node.s, State(0, 0, 0));
     //auto interval_starts = std::vector<std::pair<double, double>>();
     for (int m_x = -1; m_x <=1; m_x++){
-        act.destination.x = current_node.s.x + m_x;
+        act.destination.x.x = current_node.s.x.x + m_x;
         for (int m_y = -1; m_y <=1; m_y++){
             if (m_x == 0 && m_y == 0){
                 continue;
@@ -94,8 +94,8 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
             else{
                 dt = sqrt2()*agent_speed;
             }
-            act.destination.y = current_node.s.y + m_y;
-            if (!map.inBounds(act.destination.x, act.destination.y)){
+            act.destination.x.y = current_node.s.x.y + m_y;
+            if (!map.inBounds(act.destination.x)){
                 continue;
             }
             act.destination.time = current_node.s.time + dt;
@@ -107,7 +107,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     continue;
                 }
                 assert(safe_intervals.valid(act, agent_speed));
-                double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                double f = act.destination.time + eightWayDistance(act.destination.x, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 std::size_t intervalInd = destination_ind[i];
                 if (node_ind != std::numeric_limits<std::size_t>::max()){
@@ -123,7 +123,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     }
                     continue;
                 }
-                auto j = sippNode::newNode(act.destination.x, act.destination.y, intervalInd, act.destination.time, f, cnode);
+                auto j = sippNode::newNode(act.destination.x.x, act.destination.x.y, intervalInd, act.destination.time, f, cnode);
                 handles.emplace_back(open.emplace(j));
                 node_on_open.emplace_back(true);
                 assert(handles.size() == sippNode::nodes.size());
@@ -134,7 +134,7 @@ inline void sippGenerateSuccessors(std::size_t cnode, const State& goal, double 
 }
 
 
-inline std::vector<State> sippAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata, bool resume = false){
+inline std::vector<State> sippAStar(const State& start_state, const Configuration& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata, bool resume = false){
     long prior_open_size;
     ++(metadata.plan_attempts);
     if (!resume){
@@ -150,8 +150,8 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
     std::vector<NodeOpen<sippNode, NodeGreater<sippNode>>::handle_type> handles;
     std::vector<bool> node_on_open;
     sippNode::nodes.clear();
-    double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
-    auto current_node = sippNode::newNode(start_state.x,start_state.y, 0, start_state.time, f, std::numeric_limits<std::size_t>::max());
+    double f = start_state.time + eightWayDistance(start_state.x, goal, agent_speed);
+    auto current_node = sippNode::newNode(start_state.x.x,start_state.x.y, 0, start_state.time, f, std::numeric_limits<std::size_t>::max());
     handles.emplace_back(open.emplace(current_node));
     node_on_open.emplace_back(true);
     while(!open.empty()){
@@ -171,7 +171,7 @@ inline std::vector<State> sippAStar(const State& start_state, const State& goal,
     return {};
 }
 
-inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
+inline void pdapGenerateSuccessors(std::size_t cnode, const Configuration& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
                                            NodeOpen<pdapNode, NodeGreater<pdapNode>>& open, std::vector<NodeOpen<pdapNode, NodeGreater<pdapNode>>::handle_type>& handles, std::vector<bool>& node_on_open,
                                             std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
@@ -180,7 +180,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
     Action act(current_node.s, State(0, 0, 0));
     //auto interval_starts = std::vector<std::pair<double, double>>();
     for (int m_x = -1; m_x <=1; m_x++){
-        act.destination.x = current_node.s.x + m_x;
+        act.destination.x.x = current_node.s.x.x + m_x;
         for (int m_y = -1; m_y <=1; m_y++){
             if (m_x == 0 && m_y == 0){
                 continue;
@@ -191,8 +191,8 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
             else{
                 dt = sqrt2()*agent_speed;
             }
-            act.destination.y = current_node.s.y + m_y;
-            if (!map.inBounds(act.destination.x, act.destination.y)){
+            act.destination.x.y = current_node.s.x.y + m_y;
+            if (!map.inBounds(act.destination.x)){
                 continue;
             }
             act.destination.time = current_node.s.time + dt;
@@ -207,7 +207,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                 }
                 assert(safe_intervals.valid(act, agent_speed));
                 double beta = std::min(current_node.beta, intervalEnd(edge_interval) - alpha - delta_prior);
-                double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                double f = act.destination.time + eightWayDistance(act.destination.x, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 std::size_t intervalInd = destination_ind[i];
                 if (node_ind != std::numeric_limits<std::size_t>::max()){
@@ -223,7 +223,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
                     }
                     continue;
                 }
-                auto j = pdapNode::newNode(act.destination.x, act.destination.y, intervalInd, act.destination.time, alpha, beta, delta, f, cnode);
+                auto j = pdapNode::newNode(act.destination.x.x, act.destination.x.y, intervalInd, act.destination.time, alpha, beta, delta, f, cnode);
                 handles.emplace_back(open.emplace(j));
                 node_on_open.emplace_back(true);
                 assert(handles.size() == pdapNode::nodes.size());
@@ -237,7 +237,7 @@ inline void pdapGenerateSuccessors(std::size_t cnode, const State& goal, double 
 
 
 
-inline void pdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+inline void pdapAStar(const State& start_state, const Configuration& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
     long prior_open_size;
     std::vector<std::size_t> destination_ind;
@@ -247,8 +247,8 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
     std::vector<bool> node_on_open;
     pdapNode::nodes.clear();
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
-    double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
-    auto current_node = pdapNode::newNode(start_state.x, start_state.y, intervalBegin(start_interval), start_state.time, 0.0, intervalEnd(start_interval), 0.0, f, std::numeric_limits<std::size_t>::max());
+    double f = start_state.time + eightWayDistance(start_state.x, goal, agent_speed);
+    auto current_node = pdapNode::newNode(start_state.x.x, start_state.x.y, intervalBegin(start_interval), start_state.time, 0.0, intervalEnd(start_interval), 0.0, f, std::numeric_limits<std::size_t>::max());
     handles.emplace_back(open.emplace(current_node));
     node_on_open.emplace_back(true);
     assert(handles.size() == pdapNode::nodes.size());
@@ -272,7 +272,7 @@ inline void pdapAStar(const State& start_state, const State& goal, double agent_
 
 
 
-inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
+inline void partialPdapGenerateSuccessors(std::size_t cnode, const Configuration& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map,
                                            NodeOpen<partialPdapNode, partialPdapNodeGreater>& open, std::vector<NodeOpen<partialPdapNode, partialPdapNodeGreater>::handle_type>& handles, std::vector<bool>& node_on_open,
                                             std::vector<std::size_t>& destination_ind, std::vector<std::size_t>& edge_ind){
     double dt;
@@ -282,7 +282,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
     Action act(current_node.s, State(0, 0, 0));
     //auto interval_starts = std::vector<std::pair<double, double>>();
     for (int m_x = -1; m_x <=1; m_x++){
-        act.destination.x = current_node.s.x + m_x;
+        act.destination.x.x = current_node.s.x.x + m_x;
         for (int m_y = -1; m_y <=1; m_y++){
             if (m_x == 0 && m_y == 0){
                 continue;
@@ -293,14 +293,14 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
             else{
                 dt = sqrt2()*agent_speed;
             }
-            act.destination.y = current_node.s.y + m_y;
-            if (!map.inBounds(act.destination.x, act.destination.y)){
+            act.destination.x.y = current_node.s.x.y + m_y;
+            if (!map.inBounds(act.destination.x)){
                 continue;
             }
             act.destination.time = current_node.s.time + dt;
             double delta = delta_prior + dt;
             double pmf = safe_intervals.partialwaits(act, current_node.intervalInd, destination_ind, edge_ind, dt, current_node.expansions);
-            double prospective_next_f = std::max(current_node.alpha + delta_prior, pmf) + dt + eightWayDistance(act.destination, goal, agent_speed);
+            double prospective_next_f = std::max(current_node.alpha + delta_prior, pmf) + dt + eightWayDistance(act.destination.x, goal, agent_speed);
             if (prospective_next_f < min_f){
                 min_f = prospective_next_f;
             }
@@ -314,7 +314,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
                 }
                 assert(safe_intervals.valid(act, agent_speed));
                 double beta = std::min(current_node.beta, intervalEnd(edge_interval) - alpha - delta_prior);
-                double f = act.destination.time + eightWayDistance(act.destination, goal, agent_speed);
+                double f = act.destination.time + eightWayDistance(act.destination.x, goal, agent_speed);
                 std::size_t node_ind = safe_intervals.visited(act, current_node.intervalInd, destination_ind[i], edge_ind[i]);
                 std::size_t intervalInd = destination_ind[i];
                 if (node_ind != std::numeric_limits<std::size_t>::max()){
@@ -330,7 +330,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
                     }
                     continue;
                 }
-                auto j = partialPdapNode::newNode(act.destination.x, act.destination.y, intervalInd, act.destination.time, alpha, beta, delta, f, f, 0, cnode);
+                auto j = partialPdapNode::newNode(act.destination.x.y, act.destination.x.y, intervalInd, act.destination.time, alpha, beta, delta, f, f, 0, cnode);
                 handles.emplace_back(open.emplace(j));
                 node_on_open.emplace_back(true);
                 assert(handles.size() == partialPdapNode::nodes.size());
@@ -344,7 +344,7 @@ inline void partialPdapGenerateSuccessors(std::size_t cnode, const State& goal, 
     }
 }
 
-inline Functional partialPdapAStar(const State& start_state, const State& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
+inline Functional partialPdapAStar(const State& start_state, const Configuration& goal, double agent_speed, SafeIntervals& safe_intervals, const Map& map, Metadata& metadata){
     metadata.runtime.start();
     long prior_open_size;
     std::vector<std::size_t> destination_ind;
@@ -356,8 +356,8 @@ inline Functional partialPdapAStar(const State& start_state, const State& goal, 
     Functional functional;
     double max_query = metadata.args()["maxquery"].as<double>();
     auto start_interval = safe_intervals.get_interval(0.0, map.get_safe_interval_ind(start_state));
-    double f = start_state.time + eightWayDistance(start_state, goal, agent_speed);
-    auto current_node = partialPdapNode::newNode(start_state.x, start_state.y, intervalBegin(start_interval), start_state.time, 0, intervalEnd(start_interval), 0.0, f, f, 0,std::numeric_limits<std::size_t>::max());
+    double f = start_state.time + eightWayDistance(start_state.x, goal, agent_speed);
+    auto current_node = partialPdapNode::newNode(start_state.x.x, start_state.x.y, intervalBegin(start_interval), start_state.time, 0, intervalEnd(start_interval), 0.0, f, f, 0,std::numeric_limits<std::size_t>::max());
     handles.emplace_back(open.emplace(current_node));
     node_on_open.emplace_back(true);
     assert(handles.size() == partialPdapNode::nodes.size());

@@ -16,7 +16,7 @@ inline bool check_path(const std::vector<State>& path, double start_time, const 
     if (path.size() == 0){
         return false;
     }
-    State original(path[0].x, path[0].y, 0.0);
+    State original(path[0].x.x, path[0].x.y, 0.0);
     Action act(original, path[0]);
     act.destination.time += start_time;
     if (!safe_intervals.valid(act, agent_speed)){
@@ -47,9 +47,9 @@ int main(int argc, char *argv[]){
     SafeIntervals safe_intervals = SafeIntervals(obs, map, unsafe_time, agent_speed, start_state, metadata.args()["startendt"].as<double>());
     //std::cout << "Safe intervals generated\n";
     double start_time = metadata.args()["startt"].as<double>();
-    assert(map.isSafe(start_state.x, start_state.y));
-    State goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>(), 0.0);
-    assert(map.isSafe(goal.x, goal.y));
+    assert(map.isSafe(start_state.x));
+    Configuration goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>());
+    assert(map.isSafe(goal));
     if(metadata.args()["search"].as<std::string>() == "sipp"){
         auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
         double rts = start_time;

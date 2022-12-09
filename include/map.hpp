@@ -81,31 +81,30 @@ struct Map{
         assert(ind == size);
     }
 
-    constexpr void checkBounds(int x, int y) const{
-        (void)x;
-        (void)y;
-        assert (x >= 0 && (unsigned int)x < width);
-        assert (y >= 0 && (unsigned int)y < height);
+    constexpr void checkBounds(const Location& loc) const{
+        (void)loc;
+        assert (loc.x >= 0 && (unsigned int)loc.x < width);
+        assert (loc.y >= 0 && (unsigned int)loc.y < height);
     }
-    constexpr bool inBounds(int x, int y) const{
-        return (x >= 0 && (unsigned int)x < width) && (y >= 0 && (unsigned int)y < height);
+    constexpr bool inBounds(const Location& loc) const{
+        return (loc.x >= 0 && (unsigned int)loc.x < width) && (loc.y >= 0 && (unsigned int)loc.y < height);
     }
 
-    inline std::size_t getIndex(int x, int y) const{
-        checkBounds(x, y);
-        return x + width*y; 
+    inline std::size_t getIndex(const Location& loc) const{
+        checkBounds(loc);
+        return loc.x + width*loc.y; 
     }
 
     inline std::size_t getIndex(State s) const{
-        return getIndex(s.x, s.y); 
+        return getIndex(s.x); 
     }
 
-    inline bool isBlocked(int x, int y) const{
-        return occupancy[getIndex(x, y)];
+    inline bool isBlocked(const Location& loc) const{
+        return occupancy[getIndex(loc)];
     }
 
-    inline bool isSafe(int x, int y) const{
-        return !isBlocked(x, y);
+    inline bool isSafe(const Location& loc) const{
+        return !isBlocked(loc);
     }
 
     inline std::size_t get_safe_interval_ind(const State& s) const{
@@ -122,16 +121,16 @@ struct Map{
             res[2] = std::numeric_limits<std::size_t>::max();
             return;
         }
-        res[1] = 4*getIndex(destination);
-        int shift = (destination.x != source.x) | ((destination.y != source.y) << 1);
-        res[2] = 4*getIndex(std::min(destination.x, source.x), std::min(destination.y, source.y)) + shift;
+        res[1] = get_safe_interval_ind(destination);
+        int shift = (destination.x.x != source.x.x) | ((destination.x.y != source.x.y) << 1);
+        res[2] = 4*getIndex(Location(std::min(destination.x.x, source.x.x), std::min(destination.x.y, source.x.y))) + shift;
         return;
     }
 
     void debug()const{
         for (uint j = 0; j < height; j++){
             for (uint i = 0; i < width; i++){
-                std::cout << isSafe(i, j);
+                std::cout << isSafe(Location(i, j));
             }
             std::cout << "\n";
         }
