@@ -11,6 +11,7 @@
 #include "constants.hpp"
 #include "heuristic.hpp"
 #include "structs.hpp"
+#include "arrivalTimeFunction.hpp"
 
 template <typename NodeT, typename NodeSort>
 inline void debug_open(const NodeOpen<NodeT, NodeSort>& open){

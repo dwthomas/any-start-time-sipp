@@ -7,8 +7,6 @@
 #include "structs.hpp"
 #include "node.hpp"
 
-struct Functional;
-inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs, const Functional& functional);
 
 struct sippNode{
     State s;
@@ -198,111 +196,6 @@ struct partialPdapNode{
         std::cout << s.x.x << " " << s.x.y << " " << alpha << " " << beta << " " << delta << "\n";
     }
 };
-
-
-inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs){
-    if (rhs.beta > lhs.beta){
-        return false;
-    }
-    if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
-        return true;
-    }
-
-    return false;
-}
-
-struct Functional{
-    boost::container::flat_map<double, Subfunctional> domain;
-
-    inline double arrival_time(double t) const{
-        auto it = domain.upper_bound(t);
-        if (it != domain.begin()){
-            it = std::prev(it);
-        }
-        return it->second.arrival_time(t); 
-    }
-
-    inline double check_back(std::size_t node_ind){
-        const partialPdapNode& cn = partialPdapNode::getNode(node_ind);
-        Subfunctional prospect(cn.alpha, cn.beta, cn.f, node_ind);
-        if (domain.size()==0){
-            return true;
-        }
-        auto encumbent_it = domain.nth(domain.size()-1);
-        auto encumbent = encumbent_it->second;
-        if (!dominates(encumbent, prospect, *this)){
-            return true;
-        }
-        return false;
-    }
-
-    inline double emplace_back(double alpha, double beta, double delta, std::size_t node_ind){
-        Subfunctional prospect(alpha, beta, delta, node_ind);
-        //prospect.debug();
-        //debug();
-        if (domain.size()==0){
-            domain[0.0] = prospect;
-            return std::max(0.0, prospect.alpha);
-        }
-        auto encumbent_it = domain.nth(domain.size()-1);
-        auto encumbent = encumbent_it->second;
-        if (!dominates(encumbent, prospect, *this)){
-            std::vector<double> to_erase;
-            for(auto i = domain.rbegin(); i != domain.rend(); i++){
-                if (dominates(prospect, i->second)){
-                    to_erase.emplace_back(i->first);
-                }
-            }
-            for(auto i:to_erase){
-                domain.erase(i);
-            }
-            if (domain.size()==0){
-                domain[0.0] = prospect;
-                return std::max(0.0, prospect.alpha);
-            }
-            encumbent_it = domain.nth(domain.size()-1);
-            encumbent = encumbent_it->second;
-            double minimization_image = intersection(encumbent, prospect);
-            domain[minimization_image] = prospect;
-            return std::max(minimization_image, prospect.alpha);
-        }
-        return std::max(encumbent_it->first, encumbent.alpha);
-    }
-
-    Functional finalize(){
-        Functional f;
-        for (auto i: domain){
-            f.emplace_back(i.second.alpha, i.second.beta, i.second.delta, i.second.node_ind);
-        }
-        return f;
-    }
-
-    inline double finite_until() const{
-        return domain.nth(domain.size()-1)->second.beta;
-    }
-
-    inline void debug() const{
-        for (const auto& it: domain){
-            std::cout << it.first << ": ";
-            it.second.debug();
-        }
-    }
-
-};
-
-inline bool dominates(const Subfunctional& lhs, const Subfunctional& rhs, const Functional& functional){
-    if (rhs.beta > lhs.beta){
-        return false;
-    }
-    if (rhs.arrival_time(rhs.beta) >= lhs.arrival_time(rhs.beta) && rhs.arrival_time(rhs.alpha) >= lhs.arrival_time(rhs.alpha)){
-        return true;
-    }
-    else if(rhs.arrival_time(rhs.beta) >= functional.arrival_time(rhs.beta) &&((rhs.alpha >= rhs.beta) || rhs.arrival_time(rhs.alpha) >= functional.arrival_time(rhs.alpha))){
-        return true;
-    }
-    return false;
-}
-
 
 template <typename NodeT>
 struct NodeHash{
