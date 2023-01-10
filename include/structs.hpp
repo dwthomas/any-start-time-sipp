@@ -12,11 +12,11 @@ typedef std::pair<double, double> safe_interval;
 struct Location{
     int x;
     int y;
-    Location(int _x, int _y):x(_x),y(_y){}
+    constexpr Location(int _x, int _y):x(_x),y(_y){}
     constexpr bool operator ==(const Location& l) const{
         return x == l.x && y == l.y;
     }
-    inline void debug() const{
+    constexpr void debug() const{
         std::cout << x << " " << y;
     }
 };
@@ -26,7 +26,8 @@ using Configuration = Location;
 struct State{
     Configuration x;
     double time;
-    State(int _x, int _y, double _t):x(_x,_y),time(_t){}
+
+    constexpr State(int _x, int _y, double _t):x(_x,_y),time(_t){}
     constexpr bool operator ==(const State & s) const{
         return x == s.x && time == s.time;
     }
