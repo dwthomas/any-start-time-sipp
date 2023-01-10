@@ -12,11 +12,12 @@ typedef std::pair<double, double> safe_interval;
 struct Location{
     int x;
     int y;
+    constexpr Location() = default;
     constexpr Location(int _x, int _y):x(_x),y(_y){}
     constexpr bool operator ==(const Location& l) const{
         return x == l.x && y == l.y;
     }
-    constexpr void debug() const{
+    void debug() const{
         std::cout << x << " " << y;
     }
 };

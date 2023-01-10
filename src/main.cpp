@@ -7,6 +7,7 @@
 #include "randomDynamicObstacle.hpp"
 #include "safeIntervals.hpp"
 #include "search.hpp"
+#include "successorGeneration.hpp"
   
 std::vector<sippNode>  sippNode::nodes = std::vector<sippNode>();
 std::vector<pdapNode>  pdapNode::nodes = std::vector<pdapNode>();
@@ -43,15 +44,15 @@ int main(int argc, char *argv[]){
                                                                                             metadata.args()["maxwait"].as<double>());
     double unsafe_time = metadata.args()["allendt"].as<double>();
     double agent_speed = metadata.args()["aspeed"].as<double>();
+    std::vector<Location> movement = moves(metadata.args()["movement"].as<std::string>());
     State start_state(metadata.args()["startx"].as<int>(), metadata.args()["starty"].as<int>(), 0.0);
     SafeIntervals safe_intervals = SafeIntervals(obs, map, unsafe_time, agent_speed, start_state, metadata.args()["startendt"].as<double>());
-    //std::cout << "Safe intervals generated\n";
     double start_time = metadata.args()["startt"].as<double>();
     assert(map.isSafe(start_state.x));
     Configuration goal(metadata.args()["goalx"].as<int>(), metadata.args()["goaly"].as<int>());
     assert(map.isSafe(goal));
     if(metadata.args()["search"].as<std::string>() == "sipp"){
-        auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        auto path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, movement, metadata);
         double rts = start_time;
         while(false && !check_path(path, start_time+rts, safe_intervals, agent_speed) &&
                          start_time + rts <= metadata.args()["startendt"].as<double>()){
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]){
             start_state.debug();
             sippNode::nodes = std::vector<sippNode>();
             safe_intervals.zero_visits();
-            path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, metadata, true);
+            path = sippAStar(start_state, goal, agent_speed,safe_intervals, map, movement, metadata, true);
             rts = metadata.runtime.elapsed().user*0.000000001;// conver to second from nanosecond
         }
         std::cout << metadata.runtime.format() << "\n";
@@ -93,10 +94,10 @@ int main(int argc, char *argv[]){
         std::cout << "PDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
     }
     else if (metadata.args()["search"].as<std::string>() == "partialpdap"){
-        auto functional = partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
-        std::cout << metadata.runtime.format() << "\n";
-        std::cout << "partialPDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
-        functional.debug();
+        //auto functional = partialPdapAStar(start_state, goal, agent_speed,safe_intervals, map, metadata);
+        //std::cout << metadata.runtime.format() << "\n";
+        //std::cout << "partialPDAP\nExpansions:" << metadata.expansions << " Nodes Generated:" << metadata.generated << "\n";
+        //functional.debug();
     }
     else{
         std::cout << "Incorrect search algorithm specified: " << metadata.args()["search"].as<std::string>() << "\n";

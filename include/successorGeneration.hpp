@@ -2,14 +2,19 @@
 #include <vector>
 #include "structs.hpp"
 
-constexpr std::array<Location,4> fourWayMovements{
+enum Movement {fourWay, eightWay};
+
+inline  std::vector<Location> fourWayMovements(){
+    return {
         Location(0,1),
         Location(0,-1),
         Location(1,0),
         Location(-1,0)
     };
+}
 
-constexpr std::array<Location,8> eightWayMovements{
+inline std::vector<Location> eightWayMovements(){
+    return {
         Location(0,1),
         Location(0,-1),
         Location(1,0),
@@ -19,3 +24,14 @@ constexpr std::array<Location,8> eightWayMovements{
         Location(-1,1),
         Location(-1,-1)
     };
+}
+
+inline std::vector<Location> moves(std::string m){
+    if (m == "four"){
+        return fourWayMovements();
+    } 
+    if (m == "eight"){
+        return eightWayMovements();
+    } 
+    return {};
+}
